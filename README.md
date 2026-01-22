@@ -1,3 +1,5 @@
+<img width="1915" height="906" alt="image" src="https://github.com/user-attachments/assets/c21ad8d2-87ee-4647-b7c2-fb3751b3772e" />
+
 # 智慧物业管理系统
 
 > **基于Django的现代化物业管理SaaS平台**
