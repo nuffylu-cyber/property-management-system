@@ -1,0 +1,158 @@
+<form method="post" class="ajax-form" data-url="{{ form_url }}">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">姓名 <span class="required">*</span></label>
+                {{ form.name }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">手机号 <span class="required">*</span></label>
+                {{ form.phone }}
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="form-label">身份证号</label>
+        {{ form.id_card }}
+    </div>
+
+    <!-- 房产信息区域 -->
+    <div id="properties-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 style="margin: 0; font-size: 16px; font-weight: 600;">房产信息</h4>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="OwnerForm.addPropertyRow()" style="padding: 5px 15px;">
+                <i class="ri-add-line"></i>
+                添加房产
+            </button>
+        </div>
+
+        <div id="properties-list">
+            {% if form.instance.pk %}
+                <!-- 编辑模式:显示已有房产 -->
+                {% for owner_prop in form.instance.owners.all %}
+                <div class="property-row" data-property-id="{{ owner_prop.property.id }}"
+                     data-op-id="{{ owner_prop.id }}"
+                     data-row-index="{{ forloop.counter0 }}"
+                     style="background: var(--gray-50); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--gray-200);">
+                    <input type="hidden" name="property_op_id_{{ forloop.counter0 }}" value="{{ owner_prop.id }}">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label">小区</label>
+                                <select name="property_community_{{ forloop.counter0 }}"
+                                        class="form-control property-community-select"
+                                        data-row-index="{{ forloop.counter0 }}"
+                                        data-current-community="{{ owner_prop.property.community.id }}"
+                                        required>
+                                    <option value="">请选择小区</option>
+                                    {% for comm in communities %}
+                                        <option value="{{ comm.id }}"
+                                                {% if comm.id == owner_prop.property.community.id %}selected{% endif %}>
+                                            {{ comm.name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">房产</label>
+                                <select name="property_id_{{ forloop.counter0 }}"
+                                        class="form-control property-select"
+                                        data-row-index="{{ forloop.counter0 }}"
+                                        data-initial-community="{{ owner_prop.property.community.id }}"
+                                        data-current-property="{{ owner_prop.property.id }}"
+                                        required>
+                                    <option value="">请先选择小区</option>
+                                    {% for prop in owner_prop.property.community.properties.all %}
+                                        <option value="{{ prop.id }}"
+                                                data-community-id="{{ prop.community.id }}"
+                                                {% if prop.id == owner_prop.property.id %}selected{% endif %}>
+                                            {{ prop.full_address }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label">所有权比例(%)</label>
+                                <input type="number" name="property_ratio_{{ forloop.counter0 }}"
+                                       class="form-control"
+                                       value="{{ owner_prop.ownership_ratio|default:100 }}"
+                                       min="0" max="100" step="1">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-error btn-sm"
+                                        onclick="OwnerForm.removePropertyRow(this)"
+                                        style="width: 100%; padding: 8px;">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- 新增模式:显示一个空行 -->
+                <div class="property-row" style="background: var(--gray-50); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--gray-200);">
+                    <input type="hidden" name="property_op_id_0" value="">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label">小区</label>
+                                <select name="property_community_0"
+                                        class="form-control property-community-select"
+                                        data-row-index="0"
+                                        required>
+                                    <option value="">请选择小区</option>
+                                    {% for comm in communities %}
+                                        <option value="{{ comm.id }}">{{ comm.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">房产</label>
+                                <select name="property_id_0"
+                                        class="form-control property-select"
+                                        data-row-index="0"
+                                        required>
+                                    <option value="">请先选择小区</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label">所有权比例(%)</label>
+                                <input type="number" name="property_ratio_0"
+                                       class="form-control" value="100"
+                                       min="0" max="100" step="1">
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-error btn-sm"
+                                        onclick="OwnerForm.removePropertyRow(this)"
+                                        style="width: 100%; padding: 8px;">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 隐藏字段:标记房产数量 -->
+    <input type="hidden" name="properties_count" id="properties-count" value="{% if form.instance.pk %}{{ form.instance.owners.count }}{% else %}1{% endif %}">
+</form>

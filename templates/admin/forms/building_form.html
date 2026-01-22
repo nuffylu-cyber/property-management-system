@@ -1,0 +1,49 @@
+<form method="post" class="ajax-form" data-url="{{ form_url }}">
+    {% csrf_token %}
+    <div class="form-group">
+        <label class="form-label">所属小区 <span class="required">*</span></label>
+        {{ form.community }}
+    </div>
+    <div class="form-group">
+        <label class="form-label">楼栋名称 <span class="required">*</span></label>
+        {{ form.name }}
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label class="form-label">楼层数 <span class="required">*</span></label>
+                {{ form.floors }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label class="form-label">每层户数 <span class="required">*</span></label>
+                {{ form.units_per_floor }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label class="form-label">电梯数</label>
+                {{ form.elevator_count }}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">建筑类型</label>
+                {{ form.building_type }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">建成年份</label>
+                {{ form.construction_year }}
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="form-label">描述</label>
+        {{ form.description }}
+    </div>
+</form>

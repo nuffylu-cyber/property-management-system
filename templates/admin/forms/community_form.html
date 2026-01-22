@@ -1,0 +1,61 @@
+<form method="post" class="ajax-form" data-url="{{ form_url }}">
+    {% csrf_token %}
+    <div class="form-group">
+        <label class="form-label">小区名称 <span class="required">*</span></label>
+        {{ form.name }}
+    </div>
+    <div class="form-group">
+        <label class="form-label">详细地址 <span class="required">*</span></label>
+        {{ form.address }}
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">楼栋数 <span class="required">*</span></label>
+                {{ form.total_buildings }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">户数 <span class="required">*</span></label>
+                {{ form.total_households }}
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="form-label">建成日期</label>
+        {{ form.construction_date }}
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">开发商</label>
+                {{ form.developer }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">物业公司</label>
+                {{ form.property_company }}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">绿化率(%)</label>
+                {{ form.greening_rate }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">车位数</label>
+                {{ form.parking_spaces }}
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="form-label">描述</label>
+        {{ form.description }}
+    </div>
+</form>

@@ -1,0 +1,49 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}物业管理系统 - 管理后台{% endblock %}</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- ⭐ 无障碍修复CSS -->
+    <link rel="stylesheet" href="{% static 'css/accessibility-patch.css' %}">
+
+    <!-- CSRF Token -->
+    {% csrf_token %}
+
+    <!-- CSS -->
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- ⭐ 跳转到主内容链接（无障碍） -->
+    <a href="#main-content" class="skip-to-content">跳转到主内容</a>
+
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        {% include "components/sidebar.html" %}
+
+        <!-- 主内容区 -->
+        <main class="main-content" id="main-content">
+            <!-- 顶部栏 -->
+            {% include "components/header.html" %}
+
+            <!-- 内容区域 -->
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

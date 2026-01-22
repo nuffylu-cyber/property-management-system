@@ -1,0 +1,119 @@
+<form method="post" class="ajax-form" data-url="{{ form_url }}">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">姓名 <span class="required">*</span></label>
+                {{ form.name }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">手机号 <span class="required">*</span></label>
+                {{ form.phone }}
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="form-label">身份证号</label>
+        {{ form.id_card }}
+    </div>
+    <div class="form-group">
+        <label class="form-label">租赁小区</label>
+        <select id="tenant-community-select" class="form-control">
+            <option value="">请选择小区</option>
+            {% for community in communities %}
+            <option value="{{ community.id }}">{{ community.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="form-label">租赁房产</label>
+        {{ form.property }}
+        <small class="text-muted">请先选择小区，再从下方列表中选择具体房产</small>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">租赁开始日期</label>
+                {{ form.lease_start }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">租赁结束日期</label>
+                {{ form.lease_end }}
+            </div>
+        </div>
+    </div>
+</form>
+
+<script>
+// 租户表单级联选择逻辑
+(function() {
+    const communitySelect = document.getElementById('tenant-community-select');
+    const propertySelect = document.querySelector('select[name="property"]');
+
+    // 获取编辑模式的房产ID和小区ID（从模板变量传递）
+    const tenantPropertyId = '{{ tenant_property_id|default:"" }}';
+    const tenantPropertyCommunityId = '{{ tenant_property_community_id|default:"" }}';
+
+    if (!communitySelect || !propertySelect) {
+        console.warn('租户表单级联选择元素未找到');
+        return;
+    }
+
+    // 监听小区选择变化
+    communitySelect.addEventListener('change', async function() {
+        const communityId = this.value;
+
+        // 清空房产下拉框
+        propertySelect.innerHTML = '<option value="">请选择房产</option>';
+
+        if (!communityId) {
+            return;
+        }
+
+        try {
+            // 获取该小区的房产列表
+            const response = await fetch(`/admin/api/properties-by-community/?community_id=${communityId}`);
+            const data = await response.json();
+
+            if (data.properties && data.properties.length > 0) {
+                // 添加房产选项
+                data.properties.forEach(function(prop) {
+                    const option = document.createElement('option');
+                    option.value = prop.id;
+                    option.textContent = prop.full_address;
+                    propertySelect.appendChild(option);
+                });
+
+                // 如果是编辑模式，设置当前选中的房产
+                if (tenantPropertyId && tenantPropertyId !== '') {
+                    propertySelect.value = tenantPropertyId;
+                }
+            } else {
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = '该小区暂无房产';
+                option.disabled = true;
+                propertySelect.appendChild(option);
+            }
+        } catch (error) {
+            console.error('获取房产列表失败:', error);
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = '加载失败，请重试';
+            option.disabled = true;
+            propertySelect.appendChild(option);
+        }
+    });
+
+    // 初始化：如果是编辑模式，自动选中小区并加载房产
+    if (tenantPropertyCommunityId && tenantPropertyCommunityId !== '') {
+        communitySelect.value = tenantPropertyCommunityId;
+        // 触发change事件加载房产
+        communitySelect.dispatchEvent(new Event('change'));
+    }
+})();
+</script>

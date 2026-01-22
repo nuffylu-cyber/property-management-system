@@ -1,0 +1,56 @@
+<form method="post" class="ajax-form" data-url="{{ form_url }}">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">小区 <span class="required">*</span></label>
+                <select name="community" id="maintenance-community" class="form-control maintenance-community-select" required>
+                    <option value="">请先选择小区</option>
+                    {% for community in communities %}
+                    <option value="{{ community.id }}">{{ community.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">房产 <span class="required">*</span></label>
+                <select name="property" id="maintenance-property" class="form-control maintenance-property-select" required disabled>
+                    <option value="">请先选择小区</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">报事类型 <span class="required">*</span></label>
+                {{ form.category }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">优先级</label>
+                {{ form.priority }}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">报事人</label>
+                {{ form.reporter }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">联系电话</label>
+                {{ form.reporter_phone }}
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="form-label">详细描述 <span class="required">*</span></label>
+        {{ form.description }}
+    </div>
+</form>

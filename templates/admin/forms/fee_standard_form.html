@@ -1,0 +1,33 @@
+<form method="post" class="ajax-form" data-url="{{ form_url }}">
+    {% csrf_token %}
+    <div class="form-group">
+        <label class="form-label">所属小区 <span class="required">*</span></label>
+        {{ form.community }}
+    </div>
+    <div class="form-group">
+        <label class="form-label">费用名称 <span class="required">*</span></label>
+        {{ form.name }}
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">费用类型 <span class="required">*</span></label>
+                {{ form.fee_type }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">计费周期</label>
+                {{ form.billing_cycle }}
+            </div>
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="form-label">每平米单价(元) <span class="required">*</span></label>
+        {{ form.price_per_square }}
+    </div>
+    <div class="form-group">
+        <label class="form-label">描述</label>
+        {{ form.description }}
+    </div>
+</form>

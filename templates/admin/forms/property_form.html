@@ -1,0 +1,157 @@
+<form method="post" class="ajax-form" data-url="{{ form_url }}">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">小区 <span class="required">*</span></label>
+                {{ form.community }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">楼栋 <span class="required">*</span></label>
+                {{ form.building }}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="form-group">
+                <label class="form-label">单元</label>
+                {{ form.unit }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label class="form-label">楼层 <span class="required">*</span></label>
+                {{ form.floor }}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="form-group">
+                <label class="form-label">房号 <span class="required">*</span></label>
+                {{ form.room_number }}
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">面积(m²) <span class="required">*</span></label>
+                {{ form.area }}
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="form-group">
+                <label class="form-label">房产类型</label>
+                {{ form.property_type }}
+            </div>
+        </div>
+    </div>
+    <!-- 业主信息区域 -->
+    <div id="owners-container">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 style="margin: 0; font-size: 16px; font-weight: 600;">业主信息</h4>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="PropertyForm.addOwnerRow()" style="padding: 5px 15px;">
+                <i class="ri-add-line"></i>
+                添加业主
+            </button>
+        </div>
+
+        <div id="owners-list">
+            {% if form.instance.pk %}
+                {% for owner_prop in form.instance.owners.all %}
+                <div class="owner-row" data-owner-id="{{ owner_prop.owner.id }}" style="background: var(--gray-50); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--gray-200);">
+                    <input type="hidden" name="owner_id_{{ forloop.counter0 }}" value="{{ owner_prop.owner.id }}">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">业主姓名</label>
+                                <input type="text" name="owner_name_{{ forloop.counter0 }}"
+                                       class="form-control" value="{{ owner_prop.owner.name }}"
+                                       data-owner-id="{{ owner_prop.owner.id }}" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">联系电话</label>
+                                <input type="text" name="owner_phone_{{ forloop.counter0 }}"
+                                       class="form-control" value="{{ owner_prop.owner.phone|default:"" }}"
+                                       data-owner-id="{{ owner_prop.owner.id }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label">所有权比例(%)</label>
+                                <input type="number" name="owner_ratio_{{ forloop.counter0 }}"
+                                       class="form-control" value="{{ owner_prop.ownership_ratio|default:100 }}"
+                                       min="0" max="100" step="1"
+                                       data-owner-id="{{ owner_prop.owner.id }}">
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-group">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-error btn-sm"
+                                        onclick="PropertyForm.removeOwnerRow(this)" style="width: 100%; padding: 8px;">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- 新增房产时默认显示一个空业主行 -->
+                <div class="owner-row" style="background: var(--gray-50); padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid var(--gray-200);">
+                    <input type="hidden" name="owner_id_0" value="">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">业主姓名</label>
+                                <input type="text" name="owner_name_0" class="form-control"
+                                       placeholder="请输入业主姓名" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label class="form-label">联系电话</label>
+                                <input type="text" name="owner_phone_0" class="form-control"
+                                       placeholder="请输入手机号码">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label class="form-label">所有权比例(%)</label>
+                                <input type="number" name="owner_ratio_0" class="form-control"
+                                       value="100" min="0" max="100" step="1">
+                            </div>
+                        </div>
+                        <div class="col-md-1">
+                            <div class="form-group">
+                                <label class="form-label">&nbsp;</label>
+                                <button type="button" class="btn btn-error btn-sm"
+                                        onclick="PropertyForm.removeOwnerRow(this)" style="width: 100%; padding: 8px;">
+                                    <i class="ri-delete-bin-line"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 隐藏字段：标记业主数量 -->
+    <input type="hidden" name="owners_count" id="owners-count" value="{% if form.instance.pk %}{{ form.instance.owners.count }}{% else %}1{% endif %}">
+    <input type="hidden" name="property_id" value="{% if form.instance.pk %}{{ form.instance.id }}{% endif %}">
+
+    <div class="form-group">
+        <label class="form-label">状态</label>
+        {{ form.status }}
+    </div>
+    <div class="form-group">
+        <label class="form-label">描述</label>
+        {{ form.description }}
+    </div>
+</form>

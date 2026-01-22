@@ -1,0 +1,332 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>操作日志 - 物业管理系统</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        {% include "components/sidebar.html" %}
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部栏 -->
+            {% include "components/header.html" %}
+
+            <!-- 内容区域 -->
+            <div class="content">
+                <!-- 页面头部 -->
+                <div class="page-header animate-in">
+                    <div>
+                        <h1 class="page-title">操作日志</h1>
+                        <p class="page-subtitle">查看系统操作记录和审计信息</p>
+                    </div>
+                    <button class="btn btn-secondary" onclick="exportLogs()">
+                        <i class="ri-download-line"></i>
+                        导出日志
+                    </button>
+                </div>
+
+                <!-- 统计卡片 -->
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 13px; color: var(--gray-500);">今日操作</span>
+                            <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center;">
+                                <i class="ri-file-list-3-line"></i>
+                            </div>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--gray-900);">{{ today_count }}</div>
+                    </div>
+
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 13px; color: var(--gray-500);">本周操作</span>
+                            <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center;">
+                                <i class="ri-calendar-line"></i>
+                            </div>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--gray-900);">{{ week_count }}</div>
+                    </div>
+
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 13px; color: var(--gray-500);">活跃用户</span>
+                            <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--info-light); color: var(--info); display: flex; align-items: center; justify-content: center;">
+                                <i class="ri-user-line"></i>
+                            </div>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--gray-900);">{{ active_users }}</div>
+                    </div>
+
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 13px; color: var(--gray-500);">总记录数</span>
+                            <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--warning-light); color: var(--warning); display: flex; align-items: center; justify-content: center;">
+                                <i class="ri-database-2-line"></i>
+                            </div>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--gray-900);">{{ logs.paginator.count }}</div>
+                    </div>
+                </div>
+
+                <!-- 日志列表 -->
+                <div class="table-container">
+                    <div class="table-toolbar">
+                        <div class="table-filters">
+                            <div class="search-input">
+                                <i class="ri-search-line"></i>
+                                <input type="text" id="searchInput" placeholder="搜索操作人、操作描述..." value="{{ search_query }}">
+                            </div>
+                            <select class="filter-select" id="moduleFilter">
+                                <option value="">所有模块</option>
+                                <option value="用户管理" {% if module_filter == '用户管理' %}selected{% endif %}>用户管理</option>
+                                <option value="社区管理" {% if module_filter == '社区管理' %}selected{% endif %}>社区管理</option>
+                                <option value="房产管理" {% if module_filter == '房产管理' %}selected{% endif %}>房产管理</option>
+                                <option value="缴费管理" {% if module_filter == '缴费管理' %}selected{% endif %}>缴费管理</option>
+                                <option value="报事管理" {% if module_filter == '报事管理' %}selected{% endif %}>报事管理</option>
+                                <option value="系统管理" {% if module_filter == '系统管理' %}selected{% endif %}>系统管理</option>
+                            </select>
+                            <select class="filter-select" id="actionFilter">
+                                <option value="">所有操作</option>
+                                <option value="创建" {% if action_filter == '创建' %}selected{% endif %}>创建</option>
+                                <option value="更新" {% if action_filter == '更新' %}selected{% endif %}>更新</option>
+                                <option value="删除" {% if action_filter == '删除' %}selected{% endif %}>删除</option>
+                                <option value="登录" {% if action_filter == '登录' %}selected{% endif %}>登录</option>
+                                <option value="登出" {% if action_filter == '登出' %}selected{% endif %}>登出</option>
+                                <option value="导入" {% if action_filter == '导入' %}selected{% endif %}>导入</option>
+                                <option value="导出" {% if action_filter == '导出' %}selected{% endif %}>导出</option>
+                            </select>
+                            <input type="date" class="filter-select" id="dateFilter" value="{{ date_filter }}" style="padding: 8px 12px;">
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-secondary" onclick="applyFilters()">
+                                <i class="ri-filter-3-line"></i>
+                                筛选
+                            </button>
+                            <button class="btn btn-secondary" onclick="resetFilters()">
+                                <i class="ri-refresh-line"></i>
+                                重置
+                            </button>
+                        </div>
+                    </div>
+
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>时间</th>
+                                <th>操作人</th>
+                                <th>操作类型</th>
+                                <th>模块</th>
+                                <th>操作描述</th>
+                                <th>IP地址</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td style="font-size: 13px; color: var(--gray-600);">{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                                <td>
+                                    <div style="font-weight: 500;">{{ log.operator.username|default:"系统" }}</div>
+                                    <div style="font-size: 12px; color: var(--gray-400);">{{ log.operator.get_role_display|default:"-" }}</div>
+                                </td>
+                                <td><span class="tag tag-blue">{{ log.action }}</span></td>
+                                <td><span class="tag tag-gray">{{ log.module }}</span></td>
+                                <td>
+                                    <div style="max-width: 300px;">{{ log.description }}</div>
+                                </td>
+                                <td style="font-size: 12px; color: var(--gray-500); font-family: monospace;">{{ log.ip_address }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 40px; color: var(--gray-500);">
+                                    <i class="ri-inbox-line" style="font-size: 48px; display: block; margin-bottom: 16px;"></i>
+                                    暂无日志记录
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+
+                    {% if logs.has_other_pages %}
+                    <div class="table-pagination">
+                        <div class="pagination-info">
+                            显示第 {{ logs.start_index }} - {{ logs.end_index }} 条，共 {{ logs.paginator.count }} 条记录
+                        </div>
+                        <div class="pagination-controls">
+                            {% if logs.has_previous %}
+                                <a href="?page={{ logs.previous_page_number }}&search={{ search_query }}&module={{ module_filter }}&action={{ action_filter }}&date={{ date_filter }}" class="page-btn">
+                                    <i class="ri-arrow-left-s-line"></i>
+                                </a>
+                            {% else %}
+                                <button class="page-btn" disabled>
+                                    <i class="ri-arrow-left-s-line"></i>
+                                </button>
+                            {% endif %}
+
+                            {% for page_num in logs.paginator.page_range %}
+                                {% if page_num == logs.number %}
+                                    <button class="page-btn active">{{ page_num }}</button>
+                                {% elif page_num > logs.number|add:'-3' and page_num < logs.number|add:'3' %}
+                                    <a href="?page={{ page_num }}&search={{ search_query }}&module={{ module_filter }}&action={{ action_filter }}&date={{ date_filter }}" class="page-btn">{{ page_num }}</a>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if logs.has_next %}
+                                <a href="?page={{ logs.next_page_number }}&search={{ search_query }}&module={{ module_filter }}&action={{ action_filter }}&date={{ date_filter }}" class="page-btn">
+                                    <i class="ri-arrow-right-s-line"></i>
+                                </a>
+                            {% else %}
+                                <button class="page-btn" disabled>
+                                    <i class="ri-arrow-right-s-line"></i>
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    {% csrf_token %}
+    <script src="{% static 'js/admin.js' %}"></script>
+    <script>
+        // 获取CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value;
+            const module = document.getElementById('moduleFilter').value;
+            const action = document.getElementById('actionFilter').value;
+            const date = document.getElementById('dateFilter').value;
+
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (module) params.append('module', module);
+            if (action) params.append('action', action);
+            if (date) params.append('date', date);
+
+            window.location.href = '?' + params.toString();
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            window.location.href = '/admin/logs/';
+        }
+
+        // 导出日志
+        function exportLogs() {
+            const search = document.getElementById('searchInput').value;
+            const module = document.getElementById('moduleFilter').value;
+            const action = document.getElementById('actionFilter').value;
+            const date = document.getElementById('dateFilter').value;
+
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (module) params.append('module', module);
+            if (action) params.append('action', action);
+            if (date) params.append('date_to', date);  // 使用当前选择的日期作为结束日期
+
+            // 显示加载提示
+            showNotification('正在导出日志，请稍候...', 'info');
+
+            // 下载文件
+            const exportUrl = '/admin/api/logs/export/?' + params.toString();
+            window.location.href = exportUrl;
+
+            setTimeout(() => {
+                showNotification('日志导出成功！', 'success');
+            }, 1000);
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#10B981' : type === 'error' ? '#EF4444' : '#3B82F6'};
+                color: white;
+                padding: 16px 24px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // 添加CSS动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 回车键搜索
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                applyFilters();
+            }
+        });
+    </script>
+</body>
+</html>

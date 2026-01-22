@@ -1,0 +1,396 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支付管理 - 物业管理系统</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        {% include "components/sidebar.html" %}
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部栏 -->
+            {% include "components/header.html" %}
+
+            <!-- 内容区域 -->
+            <div class="content">
+                <!-- 页面头部 -->
+                <div class="page-header animate-in">
+                    <div>
+                        <h1 class="page-title">支付管理</h1>
+                        <p class="page-subtitle">配置和管理微信支付账号（个人账号和企业对公账户）</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="PaymentConfigCRUD.create()">
+                        <i class="ri-add-line"></i>
+                        添加支付配置
+                    </button>
+                </div>
+
+                <!-- 支付配置列表 -->
+                <div style="display: grid; gap: 20px;">
+                    {% for config in configs %}
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 16px;">
+                            <div>
+                                <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                                    <h3 style="font-size: 18px; font-weight: 600; margin: 0;">{{ config.name }}</h3>
+                                    {% if config.is_default %}
+                                    <span style="padding: 4px 12px; background: var(--success-light); color: var(--success); border-radius: 20px; font-size: 12px; font-weight: 500;">默认配置</span>
+                                    {% endif %}
+                                    {% if config.is_active %}
+                                    <span style="padding: 4px 12px; background: var(--success-light); color: var(--success); border-radius: 20px; font-size: 12px; font-weight: 500;">已启用</span>
+                                    {% else %}
+                                    <span style="padding: 4px 12px; background: var(--gray-100); color: var(--gray-500); border-radius: 20px; font-size: 12px; font-weight: 500;">已禁用</span>
+                                    {% endif %}
+                                </div>
+                                <div style="font-size: 14px; color: var(--gray-500);">
+                                    <i class="ri-bank-card-line"></i> {{ config.get_account_type_display }}
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" onclick="PaymentConfigCRUD.edit('{{ config.id }}')">
+                                    <i class="ri-edit-line"></i>
+                                    编辑
+                                </button>
+                                {% if not config.is_default %}
+                                <button class="btn btn-secondary" onclick="PaymentConfigCRUD.setDefault('{{ config.id }}')">
+                                    <i class="ri-star-line"></i>
+                                    设为默认
+                                </button>
+                                {% endif %}
+                                <button class="btn btn-error" onclick="PaymentConfigCRUD.delete('{{ config.id }}')">
+                                    <i class="ri-delete-bin-line"></i>
+                                    删除
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 配置详情 -->
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 16px; background: var(--gray-50); border-radius: var(--radius-md);">
+                            {% if config.app_id %}
+                            <div>
+                                <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 4px;">应用ID</div>
+                                <div style="font-size: 14px; font-weight: 500; font-family: monospace;">{{ config.app_id }}</div>
+                            </div>
+                            {% endif %}
+                            {% if config.mch_id %}
+                            <div>
+                                <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 4px;">商户号</div>
+                                <div style="font-size: 14px; font-weight: 500; font-family: monospace;">{{ config.mch_id }}</div>
+                            </div>
+                            {% endif %}
+                            {% if config.notify_url %}
+                            <div>
+                                <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 4px;">回调地址</div>
+                                <div style="font-size: 14px; font-weight: 500;">{{ config.notify_url }}</div>
+                            </div>
+                            {% endif %}
+                            <div>
+                                <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 4px;">创建时间</div>
+                                <div style="font-size: 14px; font-weight: 500;">{{ config.created_at|date:"Y-m-d H:i" }}</div>
+                            </div>
+                            <div style="grid-column: span {% if config.app_id and config.mch_id and config.notify_url %}1{% elif config.app_id or config.mch_id %}2{% else %}3{% endif %};">
+                                <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 4px;">备注</div>
+                                <div style="font-size: 14px; color: var(--gray-700);">{{ config.remarks|default:"无" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 80px 40px; text-align: center; box-shadow: var(--shadow-sm);">
+                        <div style="width: 80px; height: 80px; border-radius: 50%; background: var(--primary-50); color: var(--primary-500); display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;">
+                            <i class="ri-wechat-pay-line" style="font-size: 40px;"></i>
+                        </div>
+                        <h3 style="font-size: 18px; font-weight: 600; color: var(--gray-900); margin-bottom: 8px;">暂无支付配置</h3>
+                        <p style="font-size: 14px; color: var(--gray-500); margin-bottom: 24px;">添加微信支付配置以启用在线支付功能</p>
+                        <button class="btn btn-primary" onclick="PaymentConfigCRUD.create()">
+                            <i class="ri-add-line"></i>
+                            添加支付配置
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 支付配置模态框 -->
+    <div id="paymentConfigModalOverlay" class="modal-overlay">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h2 class="modal-title" id="paymentConfigModalTitle">添加支付配置</h2>
+                <button class="modal-close" onclick="PaymentConfigCRUD.closeModal()">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentConfigForm" style="display: grid; gap: 20px;">
+                    {% csrf_token %}
+                    <input type="hidden" id="configId" name="id">
+
+                    <!-- 基本信息 -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">配置名称 <span style="color: var(--error);">*</span></label>
+                            <input type="text" id="configName" name="name" required style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                        </div>
+                        <div>
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">账号类型 <span style="color: var(--error);">*</span></label>
+                            <select id="accountType" name="account_type" required style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                                <option value="enterprise">企业对公账户</option>
+                                <option value="personal">个人账号</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--gray-200); padding-top: 20px;">
+                        <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">公众号/小程序配置</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">应用ID (AppID)</label>
+                                <input type="text" id="appId" name="app_id" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">应用密钥 (AppSecret)</label>
+                                <input type="password" id="appSecret" name="app_secret" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--gray-200); padding-top: 20px;">
+                        <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">商户配置</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div>
+                                <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">商户号 (MchID)</label>
+                                <input type="text" id="mchId" name="mch_id" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">API密钥</label>
+                                <input type="password" id="apiKey" name="api_key" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">APIv3密钥</label>
+                                <input type="password" id="apiV3Key" name="api_v3_key" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">证书序列号</label>
+                                <input type="text" id="serialNo" name="serial_no" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 16px;">
+                            <div>
+                                <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">证书路径</label>
+                                <input type="text" id="certPath" name="cert_path" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                            </div>
+                            <div>
+                                <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">密钥路径</label>
+                                <input type="text" id="keyPath" name="key_path" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="border-top: 1px solid var(--gray-200); padding-top: 20px;">
+                        <h4 style="font-size: 16px; font-weight: 600; margin-bottom: 16px;">其他配置</h4>
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">支付回调地址</label>
+                            <input type="url" id="notifyUrl" name="notify_url" placeholder="https://your-domain.com/api/payment/notify/" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                        </div>
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">备注</label>
+                            <textarea id="remarks" name="remarks" rows="3" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px; resize: vertical;"></textarea>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 24px;">
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="isActive" name="is_active" checked style="width: 18px; height: 18px;">
+                                <span style="font-size: 14px; font-weight: 500;">启用此配置</span>
+                            </label>
+                            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                <input type="checkbox" id="isDefault" name="is_default" style="width: 18px; height: 18px;">
+                                <span style="font-size: 14px; font-weight: 500;">设为默认配置</span>
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="PaymentConfigCRUD.closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="PaymentConfigCRUD.save()">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    {% csrf_token %}
+    <script src="{% static 'js/admin.js' %}"></script>
+    <script>
+        const PaymentConfigCRUD = {
+            api: {
+                list: '/api/auth/payment-config/',
+                create: '/api/auth/payment-config/',
+                update: (id) => `/api/auth/payment-config/${id}/`,
+                delete: (id) => `/api/auth/payment-config/${id}/`,
+                setDefault: (id) => `/api/auth/payment-config/${id}/set_default/`,
+            },
+
+            create() {
+                document.getElementById('paymentConfigModalTitle').textContent = '添加支付配置';
+                document.getElementById('paymentConfigForm').reset();
+                document.getElementById('configId').value = '';
+                const overlay = document.getElementById('paymentConfigModalOverlay');
+                const modal = overlay.querySelector('.modal');
+                overlay.style.display = 'flex';
+                setTimeout(() => {
+                    overlay.classList.add('show');
+                    modal.classList.add('show');
+                }, 10);
+            },
+
+            async edit(id) {
+                try {
+                    const response = await fetch(this.api.update(id));
+                    if (!response.ok) {
+                        throw new Error('获取配置信息失败');
+                    }
+                    const config = await response.json();
+
+                    document.getElementById('paymentConfigModalTitle').textContent = '编辑支付配置';
+                    document.getElementById('configId').value = config.id;
+                    document.getElementById('configName').value = config.name || '';
+                    document.getElementById('accountType').value = config.account_type || 'enterprise';
+                    document.getElementById('appId').value = config.app_id || '';
+                    document.getElementById('appSecret').value = config.app_secret || '';
+                    document.getElementById('mchId').value = config.mch_id || '';
+                    document.getElementById('apiKey').value = config.api_key || '';
+                    document.getElementById('apiV3Key').value = config.api_v3_key || '';
+                    document.getElementById('serialNo').value = config.serial_no || '';
+                    document.getElementById('certPath').value = config.cert_path || '';
+                    document.getElementById('keyPath').value = config.key_path || '';
+                    document.getElementById('notifyUrl').value = config.notify_url || '';
+                    document.getElementById('remarks').value = config.remarks || '';
+                    document.getElementById('isActive').checked = config.is_active;
+                    document.getElementById('isDefault').checked = config.is_default;
+
+                    const overlay = document.getElementById('paymentConfigModalOverlay');
+                    const modal = overlay.querySelector('.modal');
+                    overlay.style.display = 'flex';
+                    setTimeout(() => {
+                        overlay.classList.add('show');
+                        modal.classList.add('show');
+                    }, 10);
+                } catch (e) {
+                    alert('加载配置数据失败: ' + e.message);
+                }
+            },
+
+            async save() {
+                const form = document.getElementById('paymentConfigForm');
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                // 处理复选框
+                data.is_active = document.getElementById('isActive').checked;
+                data.is_default = document.getElementById('isDefault').checked;
+
+                const configId = document.getElementById('configId').value;
+                const url = configId ? this.api.update(configId) : this.api.create;
+                const method = configId ? 'PUT' : 'POST';
+
+                try {
+                    const response = await fetch(url, {
+                        method: method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (response.ok) {
+                        alert('保存成功');
+                        location.reload();
+                    } else {
+                        const error = await response.json();
+                        alert('保存失败: ' + JSON.stringify(error));
+                    }
+                } catch (e) {
+                    alert('保存失败: ' + e.message);
+                }
+            },
+
+            async delete(id) {
+                if (!confirm('确定要删除此支付配置吗？')) return;
+
+                try {
+                    const response = await fetch(this.api.delete(id), {
+                        method: 'DELETE',
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert('删除成功');
+                        location.reload();
+                    } else {
+                        alert('删除失败');
+                    }
+                } catch (e) {
+                    alert('删除失败: ' + e.message);
+                }
+            },
+
+            async setDefault(id) {
+                try {
+                    const response = await fetch(this.api.setDefault(id), {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]').value
+                        }
+                    });
+
+                    if (response.ok) {
+                        alert('已设为默认配置');
+                        location.reload();
+                    } else {
+                        alert('设置失败');
+                    }
+                } catch (e) {
+                    alert('设置失败: ' + e.message);
+                }
+            },
+
+            closeModal() {
+                const overlay = document.getElementById('paymentConfigModalOverlay');
+                const modal = overlay.querySelector('.modal');
+                overlay.classList.remove('show');
+                modal.classList.remove('show');
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                }, 300);
+            }
+        };
+
+        // 点击模态框外部关闭
+        window.onclick = function(event) {
+            const overlay = document.getElementById('paymentConfigModalOverlay');
+            if (event.target === overlay) {
+                PaymentConfigCRUD.closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

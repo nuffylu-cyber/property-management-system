@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>报事管理 - 物业管理系统</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet" integrity="sha384-RGfTVqupv4ApPWeLYGbt6x8F8k4pbcQ52UPYH3u/trrA8zMHFFHgCxpQTsqeE" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/css/admin.css?v=1.0">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/admin/" class="logo">
+                    <div class="logo-icon">
+                        <i class="ri-building-4-line"></i>
+                    </div>
+                    <span>智慧物业</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">主菜单</div>
+                    <a href="/admin/" class="nav-item" id="nav-dashboard">
+                        <i class="ri-dashboard-line"></i>
+                        <span>数据概览</span>
+                    </a>
+                    <a href="/admin/community/" class="nav-item" id="nav-community">
+                        <i class="ri-community-line"></i>
+                        <span>小区管理</span>
+                    </a>
+                    <a href="/admin/property/" class="nav-item" id="nav-property">
+                        <i class="ri-home-4-line"></i>
+                        <span>房产管理</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">业务管理</div>
+                    <a href="/admin/payment/" class="nav-item" id="nav-payment">
+                        <i class="ri-payment-line"></i>
+                        <span>缴费管理</span>
+                    </a>
+                    <a href="/admin/maintenance/" class="nav-item" id="nav-maintenance">
+                        <i class="ri-tools-line"></i>
+                        <span>报事管理</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar">李</div>
+                    <div class="user-info">
+                        <div class="user-name">李明</div>
+                        <div class="user-role">超级管理员</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item">首页</span>
+                        <span class="breadcrumb-separator"><i class="ri-arrow-right-s-line"></i></span>
+                        <span class="breadcrumb-item active" id="breadcrumb-current">报事管理</span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="ri-search-line"></i>
+                        <input type="text" placeholder="搜索房产、业主、账单...">
+                    </div>
+
+                    <div class="header-actions">
+                        <button class="icon-btn">
+                            <i class="ri-notification-3-line"></i>
+                        </button>
+                        <button class="icon-btn">
+                            <i class="ri-logout-box-r-line"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 内容区域 -->
+            <div class="content">
+                
+                <div class="page-header animate-in">
+                    <div>
+                        <h1 class="page-title">报事管理</h1>
+                        <p class="page-subtitle">处理业主报事和维修请求</p>
+                    </div>
+                    <div style="display: flex; gap: 12px;">
+                        <button class="btn btn-secondary">
+                            <i class="ri-bar-chart-line"></i>
+                            统计分析
+                        </button>
+                        <button class="btn btn-primary" onclick="MaintenanceCRUD.addMaintenance()">
+                            <i class="ri-add-line"></i>
+                            手动报事
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 统计看板 -->
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-bottom: 24px;">
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 13px; color: var(--gray-500);">全部报事</span>
+                            <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--primary-50); color: var(--primary-600); display: flex; align-items: center; justify-content: center;">
+                                <i class="ri-file-list-3-line"></i>
+                            </div>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--gray-900);">{{ stats_by_status.pending|add:stats_by_status.assigned|add:stats_by_status.processing|add:stats_by_status.completed|add:0 }}</div>
+                    </div>
+
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 13px; color: var(--gray-500);">待派单</span>
+                            <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--warning-light); color: var(--warning); display: flex; align-items: center; justify-content: center;">
+                                <i class="ri-time-line"></i>
+                            </div>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--warning);">{{ stats_by_status.pending|default:0 }}</div>
+                    </div>
+
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 13px; color: var(--gray-500);">处理中</span>
+                            <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--info-light); color: var(--info); display: flex; align-items: center; justify-content: center;">
+                                <i class="ri-loader-4-line"></i>
+                            </div>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--info);">{{ stats_by_status.processing|default:0 }}</div>
+                    </div>
+
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 13px; color: var(--gray-500);">已完成</span>
+                            <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center;">
+                                <i class="ri-check-double-line"></i>
+                            </div>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--success);">{{ stats_by_status.completed|default:0 }}</div>
+                    </div>
+
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 16px; box-shadow: var(--shadow-sm);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+                            <span style="font-size: 13px; color: var(--gray-500);">紧急报事</span>
+                            <div style="width: 32px; height: 32px; border-radius: var(--radius-md); background: var(--error-light); color: var(--error); display: flex; align-items: center; justify-content: center;">
+                                <i class="ri-alarm-warning-line"></i>
+                            </div>
+                        </div>
+                        <div style="font-size: 24px; font-weight: 700; color: var(--error);">{{ priority_stats.high|default:0 }}</div>
+                    </div>
+                </div>
+
+                <!-- Tab切换 -->
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab(this, 'requests-list')">
+                        <i class="ri-list-check"></i>
+                        报事列表
+                    </button>
+                    <button class="tab" onclick="switchTab(this, 'kanban')">
+                        <i class="ri-kanban-view"></i>
+                        看板视图
+                    </button>
+                    <button class="tab" onclick="switchTab(this, 'stats')">
+                        <i class="ri-pie-chart-line"></i>
+                        统计分析
+                    </button>
+                </div>
+
+                <!-- 报事列表Tab -->
+                <div id="tab-requests-list" class="tab-content">
+                    <div class="table-container">
+                        <div class="table-toolbar">
+                            <div class="table-filters">
+                                <div class="search-input">
+                                    <i class="ri-search-line"></i>
+                                    <input type="text" id="request-search-input" placeholder="搜索报事编号、房号..." value="{{ search_query }}">
+                                </div>
+                                <select class="filter-select" id="request-filter-community">
+                                    <option value="">所有小区</option>
+                                    {% for community in communities %}
+                                    <option value="{{ community.id }}" {% if request.GET.community == community.id|stringformat:'s' %}selected{% endif %}>{{ community.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select class="filter-select" id="request-filter-category">
+                                    <option value="">报事类别</option>
+                                    <option value="electric" {% if request.GET.category == 'electric' %}selected{% endif %}>水电维修</option>
+                                    <option value="plumbing" {% if request.GET.category == 'plumbing' %}selected{% endif %}>水工维修</option>
+                                    <option value="civil" {% if request.GET.category == 'civil' %}selected{% endif %}>土木维修</option>
+                                    <option value="elevator" {% if request.GET.category == 'elevator' %}selected{% endif %}>电梯维修</option>
+                                    <option value="cleaning" {% if request.GET.category == 'cleaning' %}selected{% endif %}>环境卫生</option>
+                                    <option value="security" {% if request.GET.category == 'security' %}selected{% endif %}>安全保卫</option>
+                                    <option value="other" {% if request.GET.category == 'other' %}selected{% endif %}>其他</option>
+                                </select>
+                                <select class="filter-select" id="request-filter-priority">
+                                    <option value="">优先级</option>
+                                    <option value="high" {% if request.GET.priority == 'high' %}selected{% endif %}>非常紧急</option>
+                                    <option value="medium" {% if request.GET.priority == 'medium' %}selected{% endif %}>紧急</option>
+                                    <option value="low" {% if request.GET.priority == 'low' %}selected{% endif %}>一般</option>
+                                </select>
+                                <select class="filter-select" id="request-filter-status">
+                                    <option value="">处理状态</option>
+                                    <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>待派单</option>
+                                    <option value="assigned" {% if request.GET.status == 'assigned' %}selected{% endif %}>已派单</option>
+                                    <option value="processing" {% if request.GET.status == 'processing' %}selected{% endif %}>处理中</option>
+                                    <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>已完成</option>
+                                    <option value="closed" {% if request.GET.status == 'closed' %}selected{% endif %}>已关闭</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" onclick="RequestManager.applyFilters()">
+                                    <i class="ri-filter-3-line"></i>
+                                    筛选
+                                </button>
+                                <button class="btn btn-secondary" onclick="RequestManager.exportExcel()">
+                                    <i class="ri-download-line"></i>
+                                    导出
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>报事编号</th>
+                                    <th>房产位置</th>
+                                    <th>报事人</th>
+                                    <th>报事类别</th>
+                                    <th>问题描述</th>
+                                    <th>优先级</th>
+                                    <th>状态</th>
+                                    <th>创建时间</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for request in requests %}
+                                <tr>
+                                    <td>
+                                        <span style="font-family: monospace; font-weight: 600;">{{ request.request_number }}</span>
+                                    </td>
+                                    <td>{{ request.property.community.name }} {{ request.property }}</td>
+                                    <td>{{ request.reporter }}</td>
+                                    <td>
+                                        {% if request.category == 'electric' %}
+                                            <span class="tag tag-blue">水电维修</span>
+                                        {% elif request.category == 'plumbing' %}
+                                            <span class="tag tag-blue">水工维修</span>
+                                        {% elif request.category == 'civil' %}
+                                            <span class="tag tag-gray">土木维修</span>
+                                        {% elif request.category == 'elevator' %}
+                                            <span class="tag tag-purple">电梯维修</span>
+                                        {% elif request.category == 'cleaning' %}
+                                            <span class="tag tag-green">环境卫生</span>
+                                        {% elif request.category == 'security' %}
+                                            <span class="tag tag-orange">安保维修</span>
+                                        {% else %}
+                                            <span class="tag">{{ request.get_category_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div style="max-width: 200px;">{{ request.description|truncatewords:10 }}</div>
+                                    </td>
+                                    <td>
+                                        {% if request.priority == 'high' %}
+                                            <span class="badge badge-error">非常紧急</span>
+                                        {% elif request.priority == 'medium' %}
+                                            <span class="badge badge-warning">紧急</span>
+                                        {% else %}
+                                            <span class="badge badge-info">一般</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if request.status == 'pending' %}
+                                            <span class="badge badge-warning">待派单</span>
+                                        {% elif request.status == 'assigned' %}
+                                            <span class="badge badge-info">已派单</span>
+                                        {% elif request.status == 'processing' %}
+                                            <span class="badge badge-info">处理中</span>
+                                        {% elif request.status == 'completed' %}
+                                            <span class="badge badge-success">已完成</span>
+                                        {% elif request.status == 'closed' %}
+                                            <span class="badge badge-gray">已关闭</span>
+                                        {% endif %}
+                                    </td>
+                                    <td style="font-size: 12px; color: var(--gray-500);">{{ request.created_at|date:"Y-m-d H:i" }}</td>
+                                    <td>
+                                        <div class="table-actions">
+                                            {% if request.status == 'pending' %}
+                                                <button class="action-btn assign" onclick="MaintenanceCRUD.assignMaintenance('{{ request.id }}', '{{ request.request_number }}')">
+                                                    <i class="ri-user-add-line"></i>
+                                                    派单
+                                                </button>
+                                            {% elif request.status == 'assigned' %}
+                                                <button class="action-btn start" onclick="MaintenanceCRUD.startMaintenance('{{ request.id }}')">
+                                                    <i class="ri-play-line"></i>
+                                                    开始
+                                                </button>
+                                            {% elif request.status == 'processing' %}
+                                                <button class="action-btn complete" onclick="MaintenanceCRUD.completeMaintenance('{{ request.id }}')">
+                                                    <i class="ri-check-line"></i>
+                                                    完成
+                                                </button>
+                                            {% elif request.status == 'completed' %}
+                                                <button class="action-btn success" onclick="MaintenanceCRUD.closeMaintenance('{{ request.id }}', '{{ request.request_number }}')">
+                                                    <i class="ri-close-circle-line"></i>
+                                                    关闭
+                                                </button>
+                                                <button class="action-btn warning" onclick="MaintenanceCRUD.reopenMaintenance('{{ request.id }}', '{{ request.request_number }}')">
+                                                    <i class="ri-refresh-line"></i>
+                                                    返工
+                                                </button>
+                                            {% endif %}
+                                            <button class="action-btn edit" onclick="MaintenanceCRUD.editMaintenance('{{ request.id }}')">
+                                                <i class="ri-eye-line"></i>
+                                                查看
+                                            </button>
+                                            <button class="action-btn delete" onclick="MaintenanceCRUD.deleteMaintenance('{{ request.id }}', '{{ request.request_number }}')">
+                                                <i class="ri-delete-bin-line"></i>
+                                                删除
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" style="text-align: center; padding: 40px; color: var(--gray-500);">
+                                        <i class="ri-inbox-line" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+                                        暂无报事记录，点击上方"新增报修"按钮添加
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <div class="table-pagination">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);">
+                                <!-- 左侧：每页显示数量选择器 -->
+                                <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                                    <span style="font-size: 13px; color: var(--gray-600);">每页显示：</span>
+                                    <select class="pagination-size-select" onchange="RequestManager.changePageSize(this.value)">
+                                        <option value="10" {% if page_size == 10 %}selected{% endif %}>10 条</option>
+                                        <option value="20" {% if page_size == 20 %}selected{% endif %}>20 条</option>
+                                        <option value="50" {% if page_size == 50 %}selected{% endif %}>50 条</option>
+                                        <option value="100" {% if page_size == 100 %}selected{% endif %}>100 条</option>
+                                    </select>
+                                </div>
+
+                                <!-- 中间：分页信息 -->
+                                <div style="flex: 1; text-align: center;">
+                                    <span style="font-size: 13px; color: var(--gray-600);">
+                                        显示第 <strong>{{ requests.start_index }}-{{ requests.end_index }}</strong> 条，共 <strong>{{ request_total }}</strong> 条记录
+                                    </span>
+                                </div>
+
+                                <!-- 右侧：分页按钮 -->
+                                <div class="pagination-controls">
+                                    {% if requests.has_previous %}
+                                    <button class="page-btn" onclick="RequestManager.goToPage({{ requests.previous_page_number }})">
+                                        <i class="ri-arrow-left-s-line"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="page-btn" disabled>
+                                        <i class="ri-arrow-left-s-line"></i>
+                                    </button>
+                                    {% endif %}
+
+                                    <span style="font-size: 13px; color: var(--gray-600); margin: 0 8px;">
+                                        第 <strong>{{ requests.number }}</strong> / {{ requests.paginator.num_pages }} 页
+                                    </span>
+
+                                    {% if requests.has_next %}
+                                    <button class="page-btn" onclick="RequestManager.goToPage({{ requests.next_page_number }})">
+                                        <i class="ri-arrow-right-s-line"></i>
+                                    </button>
+                                    {% else %}
+                                    <button class="page-btn" disabled>
+                                        <i class="ri-arrow-right-s-line"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 看板视图Tab -->
+                <div id="tab-kanban" class="tab-content" style="display: none;">
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; overflow-x: auto;">
+                        <!-- 待派单列 -->
+                        <div style="background: var(--gray-100); border-radius: var(--radius-lg); padding: 16px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                                <h3 style="font-size: 14px; font-weight: 600; color: var(--gray-900);">待派单</h3>
+                                <span class="badge badge-warning">{{ stats_by_status.pending }}</span>
+                            </div>
+
+                            {% for req in pending_requests %}
+                            <div style="background: #fff; border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); cursor: pointer;" onclick="MaintenanceCRUD.editMaintenance('{{ req.id }}')">
+                                <div style="display: flex; align-items: justify-between; margin-bottom: 8px;">
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--primary-600);">{{ req.request_number }}</span>
+                                    {% if req.priority == 'high' %}
+                                        <span class="badge badge-error" style="font-size: 10px;">紧急</span>
+                                    {% elif req.priority == 'medium' %}
+                                        <span class="badge badge-warning" style="font-size: 10px;">一般</span>
+                                    {% else %}
+                                        <span class="badge badge-info" style="font-size: 10px;">低</span>
+                                    {% endif %}
+                                </div>
+                                <div style="font-size: 13px; font-weight: 500; color: var(--gray-900); margin-bottom: 4px;">{{ req.description|truncatewords:8 }}</div>
+                                <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 8px;">{{ req.property.community.name }} {{ req.property }}</div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--primary-500); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center;">{{ req.reporter|first|upper }}</div>
+                                    <span style="font-size: 12px; color: var(--gray-600);">{{ req.reporter }}</span>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div style="text-align: center; padding: 40px 20px; color: var(--gray-500);">
+                                <i class="ri-inbox-line" style="font-size: 32px; display: block; margin-bottom: 8px;"></i>
+                                暂无待派单报事
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- 已派单列 -->
+                        <div style="background: var(--gray-100); border-radius: var(--radius-lg); padding: 16px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                                <h3 style="font-size: 14px; font-weight: 600; color: var(--gray-900);">已派单</h3>
+                                <span class="badge badge-info">{{ stats_by_status.assigned }}</span>
+                            </div>
+
+                            {% for req in assigned_requests %}
+                            <div style="background: #fff; border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); cursor: pointer;" onclick="MaintenanceCRUD.editMaintenance('{{ req.id }}')">
+                                <div style="display: flex; align-items: justify-between; margin-bottom: 8px;">
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--primary-600);">{{ req.request_number }}</span>
+                                    {% if req.priority == 'high' %}
+                                        <span class="badge badge-error" style="font-size: 10px;">紧急</span>
+                                    {% elif req.priority == 'medium' %}
+                                        <span class="badge badge-warning" style="font-size: 10px;">一般</span>
+                                    {% else %}
+                                        <span class="badge badge-info" style="font-size: 10px;">低</span>
+                                    {% endif %}
+                                </div>
+                                <div style="font-size: 13px; font-weight: 500; color: var(--gray-900); margin-bottom: 4px;">{{ req.description|truncatewords:8 }}</div>
+                                <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 8px;">{{ req.property.community.name }} {{ req.property }}</div>
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--success); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center;">{{ req.assigned_to|first|upper|default:"?" }}</div>
+                                        <span style="font-size: 12px; color: var(--gray-600);">{{ req.assigned_to|default:"未分配" }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div style="text-align: center; padding: 40px 20px; color: var(--gray-500);">
+                                <i class="ri-inbox-line" style="font-size: 32px; display: block; margin-bottom: 8px;"></i>
+                                暂无已派单报事
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- 处理中列 -->
+                        <div style="background: var(--gray-100); border-radius: var(--radius-lg); padding: 16px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                                <h3 style="font-size: 14px; font-weight: 600; color: var(--gray-900);">处理中</h3>
+                                <span class="badge badge-info">{{ stats_by_status.processing }}</span>
+                            </div>
+
+                            {% for req in processing_requests %}
+                            <div style="background: #fff; border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); cursor: pointer;" onclick="MaintenanceCRUD.editMaintenance('{{ req.id }}')">
+                                <div style="display: flex; align-items: justify-between; margin-bottom: 8px;">
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--primary-600);">{{ req.request_number }}</span>
+                                    {% if req.priority == 'high' %}
+                                        <span class="badge badge-error" style="font-size: 10px;">紧急</span>
+                                    {% elif req.priority == 'medium' %}
+                                        <span class="badge badge-warning" style="font-size: 10px;">一般</span>
+                                    {% else %}
+                                        <span class="badge badge-info" style="font-size: 10px;">低</span>
+                                    {% endif %}
+                                </div>
+                                <div style="font-size: 13px; font-weight: 500; color: var(--gray-900); margin-bottom: 4px;">{{ req.description|truncatewords:8 }}</div>
+                                <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 8px;">{{ req.property.community.name }} {{ req.property }}</div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--info); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center;">{{ req.assigned_to|first|upper|default:"?" }}</div>
+                                    <span style="font-size: 12px; color: var(--gray-600);">{{ req.assigned_to|default:"未分配" }}</span>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div style="text-align: center; padding: 40px 20px; color: var(--gray-500);">
+                                <i class="ri-inbox-line" style="font-size: 32px; display: block; margin-bottom: 8px;"></i>
+                                暂无处理中报事
+                            </div>
+                            {% endfor %}
+                        </div>
+
+                        <!-- 已完成列 -->
+                        <div style="background: var(--gray-100); border-radius: var(--radius-lg); padding: 16px;">
+                            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                                <h3 style="font-size: 14px; font-weight: 600; color: var(--gray-900);">已完成</h3>
+                                <span class="badge badge-success">{{ stats_by_status.completed }}</span>
+                            </div>
+
+                            {% for req in completed_requests %}
+                            <div style="background: #fff; border-radius: var(--radius-md); padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow-sm); cursor: pointer;" onclick="MaintenanceCRUD.editMaintenance('{{ req.id }}')">
+                                <div style="display: flex; align-items: justify-between; margin-bottom: 8px;">
+                                    <span style="font-family: monospace; font-size: 12px; color: var(--primary-600);">{{ req.request_number }}</span>
+                                    {% if req.priority == 'high' %}
+                                        <span class="badge badge-error" style="font-size: 10px;">紧急</span>
+                                    {% elif req.priority == 'medium' %}
+                                        <span class="badge badge-warning" style="font-size: 10px;">一般</span>
+                                    {% else %}
+                                        <span class="badge badge-info" style="font-size: 10px;">低</span>
+                                    {% endif %}
+                                </div>
+                                <div style="font-size: 13px; font-weight: 500; color: var(--gray-900); margin-bottom: 4px;">{{ req.description|truncatewords:8 }}</div>
+                                <div style="font-size: 12px; color: var(--gray-500); margin-bottom: 8px;">{{ req.property.community.name }} {{ req.property }}</div>
+                                <div style="display: flex; align-items: center; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center; gap: 8px;">
+                                        <div style="width: 24px; height: 24px; border-radius: 50%; background: var(--success); color: #fff; font-size: 11px; display: flex; align-items: center; justify-content: center;">{{ req.assigned_to|first|upper|default:"?" }}</div>
+                                        <span style="font-size: 12px; color: var(--gray-600);">{{ req.assigned_to|default:"未分配" }}</span>
+                                    </div>
+                                    {% if req.rating %}
+                                        <i class="ri-star-fill" style="color: #FFD700; font-size: 14px;"></i>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div style="text-align: center; padding: 40px 20px; color: var(--gray-500);">
+                                <i class="ri-inbox-line" style="font-size: 32px; display: block; margin-bottom: 8px;"></i>
+                                暂无已完成报事
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 统计分析Tab -->
+                <div id="tab-stats" class="tab-content" style="display: none;">
+                    <div class="content-grid">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">本月报事统计 (总计: {{ total_monthly }})</h3>
+                            </div>
+                            <div class="card-body">
+                                {% for category_name, stats in category_stats.items %}
+                                <div style="margin-bottom: {% if forloop.last %}0{% else %}24px{% endif %};">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="font-size: 13px; color: var(--gray-600);">{{ category_name }}</span>
+                                        <span style="font-size: 13px; font-weight: 600;">{{ stats.percentage }}% ({{ stats.count }})</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: {{ stats.percentage }}%;"></div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div style="text-align: center; padding: 40px 20px; color: var(--gray-500);">
+                                    暂无本月数据
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">优先级分布</h3>
+                            </div>
+                            <div class="card-body">
+                                <div style="margin-bottom: 24px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="font-size: 13px; color: var(--gray-600);">非常紧急</span>
+                                        <span style="font-size: 13px; font-weight: 600; color: var(--error);">{{ priority_stats.high }}</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill error" style="width: {% widthratio priority_stats.high 1 100 %}%;"></div>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 24px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="font-size: 13px; color: var(--gray-600);">一般</span>
+                                        <span style="font-size: 13px; font-weight: 600; color: var(--warning);">{{ priority_stats.medium }}</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill warning" style="width: {% widthratio priority_stats.medium 1 100 %}%;"></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="font-size: 13px; color: var(--gray-600);">较低</span>
+                                        <span style="font-size: 13px; font-weight: 600; color: var(--info);">{{ priority_stats.low }}</span>
+                                    </div>
+                                    <div class="progress-bar">
+                                        <div class="progress-fill" style="width: {% widthratio priority_stats.low 1 100 %}%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+            </div>
+        </main>
+    </div>
+
+    <!-- 标签页工具函数 -->
+    <script src="/static/js/tab-utils.js?v=1.0"></script>
+    <!-- 通用CRUD管理器 -->
+    <script src="/static/js/universal-crud.js?v=2.2"></script>
+    <!-- 报事管理CRUD模块 -->
+    <script src="/static/js/maintenance-crud.js?v=2.7"></script>
+    <script src="/static/js/admin.js?v=2.2"></script>
+
+    <script>
+    // 设置当前页面的active状态
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+
+        // 移除所有active类
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // 添加active类到当前页面的导航项
+        if (currentPath === '/admin/') {
+            document.getElementById('nav-dashboard')?.classList.add('active');
+        } else if (currentPath === '/admin/community/') {
+            document.getElementById('nav-community')?.classList.add('active');
+        } else if (currentPath === '/admin/property/') {
+            document.getElementById('nav-property')?.classList.add('active');
+        } else if (currentPath === '/admin/payment/') {
+            document.getElementById('nav-payment')?.classList.add('active');
+        } else if (currentPath === '/admin/maintenance/') {
+            document.getElementById('nav-maintenance')?.classList.add('active');
+
+            // 检查URL参数中的tab，自动切换到对应的标签页
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTab = urlParams.get('tab');
+            const action = urlParams.get('action');
+
+            if (activeTab) {
+                const tabElement = document.querySelector(`.tab[onclick*="switchTab(this, '${activeTab}')"]`);
+                if (tabElement) {
+                    switchTab(tabElement, activeTab);
+                }
+            }
+
+            // 处理action参数：报事派单 - 自动筛选待派单的报事
+            console.log('[Maintenance Page] Checking action parameter:', action);
+
+            if (action === 'dispatch') {
+                console.log('[Maintenance Page] Action is "dispatch", applying filter...');
+
+                // 先切换到报事列表标签页
+                if (activeTab === 'requests-list') {
+                    console.log('[Maintenance Page] Switching to requests-list tab first');
+                    const tabElement = document.querySelector(`.tab[onclick*="switchTab(this, 'requests-list')"]`);
+                    if (tabElement) {
+                        switchTab(tabElement, 'requests-list');
+                    }
+                }
+
+                setTimeout(() => {
+                    console.log('[Maintenance Page] Timeout fired, applying status filter...');
+                    const statusFilter = document.getElementById('request-filter-status');
+                    console.log('[Maintenance Page] Status filter element:', statusFilter);
+
+                    if (statusFilter) {
+                        statusFilter.value = 'pending'; // 设置为"待派单"状态
+                        console.log('[Maintenance Page] ✓ Status filter set to:', statusFilter.value);
+
+                        // 触发筛选
+                        if (typeof RequestManager !== 'undefined' && typeof RequestManager.applyFilters === 'function') {
+                            console.log('[Maintenance Page] ✓ Calling RequestManager.applyFilters()');
+                            try {
+                                RequestManager.applyFilters();
+                                console.log('[Maintenance Page] ✓ Filters applied successfully');
+                            } catch (e) {
+                                console.error('[Maintenance Page] ✗ Error applying filters:', e);
+                            }
+                        } else {
+                            console.log('[Maintenance Page] ⚠ RequestManager.applyFilters not available');
+                        }
+                    } else {
+                        console.error('[Maintenance Page] ✗ Status filter element not found');
+                    }
+                }, 500);
+            }
+        }
+
+    });
+
+    // Tab切换功能
+    function switchTab(tabElement, tabName) {
+        const container = tabElement.closest('.tabs');
+        const tabs = container.querySelectorAll('.tab');
+
+        tabs.forEach(tab => tab.classList.remove('active'));
+        tabElement.classList.add('active');
+
+        const mainContent = document.querySelector('.content');
+        const tabContents = mainContent.querySelectorAll('.tab-content');
+        tabContents.forEach(content => {
+            content.style.display = 'none';
+        });
+
+        const selectedTab = document.getElementById('tab-' + tabName);
+        if (selectedTab) {
+            selectedTab.style.display = 'block';
+        }
+    }
+</script>
+</body>
+</html>

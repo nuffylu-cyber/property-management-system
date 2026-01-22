@@ -1,0 +1,201 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统设置 - 物业管理系统</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body>
+    <div class="app-container">
+        <!-- 侧边栏 -->
+        {% include "components/sidebar.html" %}
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <!-- 顶部栏 -->
+            {% include "components/header.html" %}
+
+            <!-- 内容区域 -->
+            <div class="content">
+                <!-- 页面头部 -->
+                <div class="page-header animate-in">
+                    <div>
+                        <h1 class="page-title">系统设置</h1>
+                        <p class="page-subtitle">管理系统配置和参数</p>
+                    </div>
+                    <button class="btn btn-primary">
+                        <i class="ri-save-line"></i>
+                        保存设置
+                    </button>
+                </div>
+
+                <!-- Tab切换 -->
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab(this, 'basic')">
+                        <i class="ri-settings-3-line"></i>
+                        基本设置
+                    </button>
+                    <button class="tab" onclick="switchTab(this, 'wechat')">
+                        <i class="ri-wechat-line"></i>
+                        微信配置
+                    </button>
+                    <button class="tab" onclick="switchTab(this, 'payment')">
+                        <i class="ri-payment-line"></i>
+                        支付配置
+                    </button>
+                    <button class="tab" onclick="switchTab(this, 'notification')">
+                        <i class="ri-notification-3-line"></i>
+                        通知设置
+                    </button>
+                </div>
+
+                <!-- 基本设置Tab -->
+                <div id="tab-basic" class="tab-content">
+                    <div style="background: #fff; border-radius: var(--radius-lg); padding: 24px; box-shadow: var(--shadow-sm); max-width: 800px;">
+                        <h3 style="font-size: 18px; font-weight: 600; margin-bottom: 24px;">基本信息</h3>
+
+                        <div style="margin-bottom: 24px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">系统名称</label>
+                            <input type="text" value="智慧物业管理系统" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                        </div>
+
+                        <div style="margin-bottom: 24px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">公司名称</label>
+                            <input type="text" value="XX物业管理有限公司" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                        </div>
+
+                        <div style="margin-bottom: 24px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">联系电话</label>
+                            <input type="text" value="400-xxx-xxxx" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                        </div>
+
+                        <div style="margin-bottom: 24px;">
+                            <label style="display: block; font-size: 14px; font-weight: 500; color: var(--gray-700); margin-bottom: 8px;">系统地址</label>
+                            <input type="text" value="http://localhost:8000" style="width: 100%; padding: 10px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius-md); font-size: 14px;">
+                        </div>
+
+                        <h3 style="font-size: 18px; font-weight: 600; margin: 32px 0 24px;">功能开关</h3>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--gray-200);">
+                            <div>
+                                <div style="font-size: 14px; font-weight: 500; color: var(--gray-900);">微信登录</div>
+                                <div style="font-size: 13px; color: var(--gray-500);">允许用户使用微信登录</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid var(--gray-200);">
+                            <div>
+                                <div style="font-size: 14px; font-weight: 500; color: var(--gray-900);">在线支付</div>
+                                <div style="font-size: 13px; color: var(--gray-500);">启用微信支付功能</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 0;">
+                            <div>
+                                <div style="font-size: 14px; font-weight: 500; color: var(--gray-900);">自动催费</div>
+                                <div style="font-size: 13px; color: var(--gray-500);">自动发送欠费提醒</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- CSS for switch toggle -->
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--gray-300);
+            transition: .3s;
+            border-radius: 26px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-600);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+    </style>
+
+    <!-- JavaScript -->
+    {% csrf_token %}
+    <script src="{% static 'js/admin.js' %}"></script>
+    <script>
+        function switchTab(tabElement, tabName) {
+            const container = tabElement.closest('.tabs');
+            const tabs = container.querySelectorAll('.tab');
+
+            tabs.forEach(tab => tab.classList.remove('active'));
+            tabElement.classList.add('active');
+
+            const mainContent = document.querySelector('.content');
+            const tabContents = mainContent.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.style.display = 'none';
+            });
+
+            const selectedTab = document.getElementById('tab-' + tabName);
+            if (selectedTab) {
+                selectedTab.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

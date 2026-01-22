@@ -1,0 +1,55 @@
+{% load static %}
+<header class="header">
+    <div class="header-left">
+        <!-- ⭐ 添加语义化导航 -->
+        <nav aria-label="面包屑导航">
+            <div class="breadcrumb">
+                <span class="breadcrumb-item">
+                    <a href="{% url 'dashboard' %}">首页</a>
+                </span>
+                <span class="breadcrumb-separator" aria-hidden="true">
+                    <i class="ri-arrow-right-s-line"></i>
+                </span>
+                <span class="breadcrumb-item active" aria-current="page">
+                    {% block page_name %}数据概览{% endblock %}
+                </span>
+            </div>
+        </nav>
+    </div>
+
+    <div class="header-right">
+        <!-- ⭐ 搜索框添加无障碍标签 -->
+        <div class="search-box">
+            <label for="global-search" class="sr-only">搜索</label>
+            <i class="ri-search-line search-icon" aria-hidden="true"></i>
+            <input
+                type="search"
+                id="global-search"
+                name="q"
+                class="form-control"
+                placeholder="搜索房产、业主、账单..."
+                aria-label="搜索房产、业主、账单">
+        </div>
+
+        <div class="header-actions">
+            <!-- ⭐ 通知按钮添加语义说明 -->
+            <button
+                class="icon-btn"
+                aria-label="{% if unread_notifications > 0 %}您有{{ unread_notifications }}条未读通知{% else %}查看通知{% endif %}"
+                onclick="window.location.href='/notifications/'">
+                <i class="ri-notification-3-line" aria-hidden="true"></i>
+                {% if unread_notifications > 0 %}
+                <span class="notification-badge" aria-label="{{ unread_notifications }}条未读"></span>
+                {% endif %}
+            </button>
+
+            <!-- ⭐ 登出按钮添加语义说明 -->
+            <button
+                class="icon-btn"
+                aria-label="退出登录"
+                onclick="window.location.href='{% url 'logout' %}'">
+                <i class="ri-logout-box-r-line" aria-hidden="true"></i>
+            </button>
+        </div>
+    </div>
+</header>

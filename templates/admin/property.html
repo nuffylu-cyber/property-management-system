@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token }}">
+    <title>房产管理 - 物业管理系统</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet" integrity="sha384-RGfTVqupv4ApPWeLYGbt6x8F8k4pbcQ52UPYH3u/trrA8zMHFFHgCxpQTsqeE" crossorigin="anonymous">
+    <link rel="stylesheet" href="/static/css/admin.css?v=1.0">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="/admin/" class="logo">
+                    <div class="logo-icon">
+                        <i class="ri-building-4-line"></i>
+                    </div>
+                    <span>智慧物业</span>
+                </a>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">主菜单</div>
+                    <a href="/admin/" class="nav-item" id="nav-dashboard">
+                        <i class="ri-dashboard-line"></i>
+                        <span>数据概览</span>
+                    </a>
+                    <a href="/admin/community/" class="nav-item" id="nav-community">
+                        <i class="ri-community-line"></i>
+                        <span>小区管理</span>
+                    </a>
+                    <a href="/admin/property/" class="nav-item" id="nav-property">
+                        <i class="ri-home-4-line"></i>
+                        <span>房产管理</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">业务管理</div>
+                    <a href="/admin/payment/" class="nav-item" id="nav-payment">
+                        <i class="ri-payment-line"></i>
+                        <span>缴费管理</span>
+                    </a>
+                    <a href="/admin/maintenance/" class="nav-item" id="nav-maintenance">
+                        <i class="ri-tools-line"></i>
+                        <span>报事管理</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-card">
+                    <div class="user-avatar">李</div>
+                    <div class="user-info">
+                        <div class="user-name">李明</div>
+                        <div class="user-role">超级管理员</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主内容区 -->
+        <main class="main-content">
+            <header class="header">
+                <div class="header-left">
+                    <div class="breadcrumb">
+                        <span class="breadcrumb-item">首页</span>
+                        <span class="breadcrumb-separator"><i class="ri-arrow-right-s-line"></i></span>
+                        <span class="breadcrumb-item active" id="breadcrumb-current">房产管理</span>
+                    </div>
+                </div>
+
+                <div class="header-right">
+                    <div class="search-box">
+                        <i class="ri-search-line"></i>
+                        <input type="text" placeholder="搜索房产、业主、账单...">
+                    </div>
+
+                    <div class="header-actions">
+                        <button class="icon-btn">
+                            <i class="ri-notification-3-line"></i>
+                        </button>
+                        <button class="icon-btn">
+                            <i class="ri-logout-box-r-line"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 内容区域 -->
+            <div class="content">
+                
+                <div class="page-header animate-in">
+                    <div>
+                        <h1 class="page-title">房产管理</h1>
+                        <p class="page-subtitle">管理房产、业主和租户信息</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="PropertyCRUD.addProperty()">
+                        <i class="ri-add-line"></i>
+                        新增房产
+                    </button>
+                </div>
+
+                <!-- Tab切换 -->
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab(this, 'properties')">
+                        <i class="ri-home-4-line"></i>
+                        房产列表
+                    </button>
+                    <button class="tab" onclick="switchTab(this, 'owners')">
+                        <i class="ri-user-star-line"></i>
+                        业主管理
+                    </button>
+                    <button class="tab" onclick="switchTab(this, 'tenants')">
+                        <i class="ri-user-follow-line"></i>
+                        租户管理
+                    </button>
+                </div>
+
+                <!-- 房产列表Tab -->
+                <div id="tab-properties" class="tab-content">
+                    <div class="table-container">
+                        <div class="table-toolbar">
+                            <div class="table-filters">
+                                <div class="search-input">
+                                    <i class="ri-search-line"></i>
+                                    <input type="text" id="property-search-input" placeholder="搜索房号、业主姓名、联系电话..." value="{{ search_query }}">
+                                </div>
+                                <select class="filter-select" id="filter-community">
+                                    <option value="">所有小区</option>
+                                    {% for community in communities %}
+                                    <option value="{{ community.id }}" {% if request.GET.community == community.id|stringformat:'s' %}selected{% endif %}>{{ community.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select class="filter-select" id="filter-type">
+                                    <option value="">房产类型</option>
+                                    <option value="residential" {% if request.GET.property_type == 'residential' %}selected{% endif %}>住宅</option>
+                                    <option value="commercial" {% if request.GET.property_type == 'commercial' %}selected{% endif %}>商业</option>
+                                    <option value="garage" {% if request.GET.property_type == 'garage' %}selected{% endif %}>车库</option>
+                                    <option value="storage" {% if request.GET.property_type == 'storage' %}selected{% endif %}>储藏室</option>
+                                </select>
+                                <select class="filter-select" id="filter-status">
+                                    <option value="">房产状态</option>
+                                    <option value="occupied" {% if request.GET.status == 'occupied' %}selected{% endif %}>自住</option>
+                                    <option value="rented" {% if request.GET.status == 'rented' %}selected{% endif %}>出租</option>
+                                    <option value="vacant" {% if request.GET.status == 'vacant' %}selected{% endif %}>空置</option>
+                                    <option value="renovation" {% if request.GET.status == 'renovation' %}selected{% endif %}>装修中</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" onclick="PropertyManager.importExcel()">
+                                    <i class="ri-upload-cloud-2-line"></i>
+                                    导入Excel
+                                </button>
+                                <button class="btn btn-secondary" onclick="PropertyManager.applyFilters()">
+                                    <i class="ri-filter-3-line"></i>
+                                    筛选
+                                </button>
+                                <button class="btn btn-secondary" onclick="PropertyManager.exportToExcel()">
+                                    <i class="ri-download-line"></i>
+                                    导出
+                                </button>
+                                <button class="btn btn-secondary" style="color: var(--error); border-color: var(--error);" onclick="PropertyManager.batchDeleteProperties()">
+                                    <i class="ri-delete-bin-line"></i>
+                                    批量删除
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">
+                                        <input type="checkbox" id="select-all-properties" onchange="PropertyManager.toggleSelectAll(this)">
+                                    </th>
+                                    <th>房号</th>
+                                    <th>所属小区</th>
+                                    <th>面积(㎡)</th>
+                                    <th>类型</th>
+                                    <th>业主</th>
+                                    <th>联系电话</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for property in properties %}
+                                <tr data-property-id="{{ property.id }}">
+                                    <td>
+                                        <input type="checkbox" class="property-checkbox" value="{{ property.id }}">
+                                    </td>
+                                    <td>
+                                        <div style="font-weight: 600;">{{ property }}</div>
+                                        <div style="font-size: 12px; color: var(--gray-400);">{{ property.floor_room_display }}</div>
+                                    </td>
+                                    <td>{{ property.community.name }}</td>
+                                    <td>{{ property.area }}</td>
+                                    <td>
+                                        {% if property.property_type == 'residential' %}
+                                            <span class="tag tag-blue">住宅</span>
+                                        {% elif property.property_type == 'commercial' %}
+                                            <span class="tag tag-purple">商业</span>
+                                        {% elif property.property_type == 'garage' %}
+                                            <span class="tag tag-gray">车库</span>
+                                        {% elif property.property_type == 'storage' %}
+                                            <span class="tag tag-orange">储藏室</span>
+                                        {% else %}
+                                            <span class="tag">{{ property.get_property_type_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% with property_owners=property.owners.all %}
+                                            {% if property_owners %}
+                                                {% for owner_property in property_owners|slice:":2" %}
+                                                    <span style="display: {% if not forloop.first %}inline{% else %}inline{% endif %};">
+                                                        {{ owner_property.owner.name }}
+                                                        {% if not forloop.last and forloop.counter < 2 %}<span style="color: var(--gray-400);">、</span>{% endif %}
+                                                    </span>
+                                                {% endfor %}
+                                                {% if property_owners|length > 2 %}
+                                                    <span style="color: var(--gray-400);">等{{ property_owners|length }}人</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span style="color: var(--gray-400);">-</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% with property_owners=property.owners.all %}
+                                            {% if property_owners %}
+                                                {% for owner_property in property_owners|slice:":1" %}
+                                                    <span style="font-family: monospace;">{{ owner_property.owner.phone }}</span>
+                                                {% endfor %}
+                                                {% if property_owners|length > 1 %}
+                                                    <span style="color: var(--gray-400); font-size: 11px;">(等{{ property_owners|length }}人)</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span style="color: var(--gray-400);">-</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% if property.status == 'owned' %}
+                                            <span class="tag tag-green">自住</span>
+                                        {% elif property.status == 'rented' %}
+                                            <span class="tag tag-blue">出租</span>
+                                        {% elif property.status == 'vacant' %}
+                                            <span class="tag tag-gray">空置</span>
+                                        {% elif property.status == 'renovating' %}
+                                            <span class="tag tag-orange">装修中</span>
+                                        {% else %}
+                                            <span class="tag">{{ property.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="action-btn edit" onclick="PropertyCRUD.editProperty('{{ property.id }}')">
+                                                <i class="ri-edit-line"></i>
+                                                编辑
+                                            </button>
+                                            <button class="action-btn delete" onclick="PropertyCRUD.deleteProperty('{{ property.id }}', '{{ property.building.name }}-{{ property.room_number }}')">
+                                                <i class="ri-delete-bin-line"></i>
+                                                删除
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" style="text-align: center; padding: 40px; color: var(--gray-500);">
+                                        <i class="ri-inbox-line" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+                                        暂无房产数据，点击上方"新增房产"按钮添加
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <div class="table-pagination">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);">
+                                <!-- 左侧：每页显示数量选择器 -->
+                                <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                                    <span style="font-size: 13px; color: var(--gray-600);">每页显示：</span>
+                                    <select class="pagination-size-select" onchange="PropertyManager.changePageSize(this.value)">
+                                        <option value="10" {% if page_size == 10 %}selected{% endif %}>10 条</option>
+                                        <option value="20" {% if page_size == 20 %}selected{% endif %}>20 条</option>
+                                        <option value="50" {% if page_size == 50 %}selected{% endif %}>50 条</option>
+                                        <option value="100" {% if page_size == 100 %}selected{% endif %}>100 条</option>
+                                    </select>
+                                </div>
+
+                                <!-- 中间：分页信息 -->
+                                <div style="flex: 1; text-align: center;">
+                                    <span style="font-size: 13px; color: var(--gray-600);">
+                                        显示第 <strong>{{ properties.start_index }}-{{ properties.end_index }}</strong> 条，共 <strong>{{ property_total }}</strong> 条记录
+                                    </span>
+                                </div>
+
+                                <!-- 右侧：分页按钮 -->
+                                <div class="pagination-controls">
+                                    {% if properties.has_previous %}
+                                    <a href="?page=1&page_size={{ page_size }}&community={{ request.GET.community }}&property_type={{ request.GET.property_type }}&status={{ request.GET.status }}&search={{ request.GET.search }}" class="page-btn" title="首页">
+                                        首页
+                                    </a>
+                                    <a href="?page={{ properties.previous_page_number }}&page_size={{ page_size }}&community={{ request.GET.community }}&property_type={{ request.GET.property_type }}&status={{ request.GET.status }}&search={{ request.GET.search }}" class="page-btn" title="上一页">
+                                        上一页
+                                    </a>
+                                    {% else %}
+                                    <button class="page-btn" disabled title="首页">
+                                        首页
+                                    </button>
+                                    <button class="page-btn" disabled title="上一页">
+                                        上一页
+                                    </button>
+                                    {% endif %}
+
+                                    <span class="page-indicator">
+                                        <strong>{{ properties.number }}</strong> / {{ properties.paginator.num_pages }}
+                                    </span>
+
+                                    {% if properties.has_next %}
+                                    <a href="?page={{ properties.next_page_number }}&page_size={{ page_size }}&community={{ request.GET.community }}&property_type={{ request.GET.property_type }}&status={{ request.GET.status }}&search={{ request.GET.search }}" class="page-btn" title="下一页">
+                                        下一页
+                                    </a>
+                                    <a href="?page={{ properties.paginator.num_pages }}&page_size={{ page_size }}&community={{ request.GET.community }}&property_type={{ request.GET.property_type }}&status={{ request.GET.status }}&search={{ request.GET.search }}" class="page-btn" title="末页">
+                                        末页
+                                    </a>
+                                    {% else %}
+                                    <button class="page-btn" disabled title="下一页">
+                                        下一页
+                                    </button>
+                                    <button class="page-btn" disabled title="末页">
+                                        末页
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 业主管理Tab -->
+                <div id="tab-owners" class="tab-content" style="display: none;">
+                    <div class="table-container">
+                        <div class="table-toolbar">
+                            <div class="table-filters">
+                                <div class="search-input">
+                                    <i class="ri-search-line"></i>
+                                    <input type="text" id="owner-search-input" placeholder="搜索业主姓名、手机号、房产..." value="{{ search_query }}">
+                                </div>
+                                <select class="filter-select" id="owner-filter-community">
+                                    <option value="">所有小区</option>
+                                    {% for community in communities %}
+                                    <option value="{{ community.id }}" {% if request.GET.owner_community == community.id|stringformat:'s' %}selected{% endif %}>{{ community.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select class="filter-select" id="owner-filter-verified">
+                                    <option value="">认证状态</option>
+                                    <option value="verified" {% if request.GET.owner_verified == 'verified' %}selected{% endif %}>已认证</option>
+                                    <option value="unverified" {% if request.GET.owner_verified == 'unverified' %}selected{% endif %}>未认证</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" onclick="OwnerManager.applyFilters()">
+                                    <i class="ri-filter-3-line"></i>
+                                    筛选
+                                </button>
+                                <button class="btn btn-primary" onclick="OwnerCRUD.addOwner()">
+                                    <i class="ri-add-line"></i>
+                                    新增业主
+                                </button>
+                                <button class="btn btn-secondary" style="color: var(--error); border-color: var(--error);" onclick="OwnerManager.batchDeleteOwners()">
+                                    <i class="ri-delete-bin-line"></i>
+                                    批量删除
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">
+                                        <input type="checkbox" id="select-all-owners" onchange="OwnerManager.toggleSelectAll(this)">
+                                    </th>
+                                    <th>业主姓名</th>
+                                    <th>联系电话</th>
+                                    <th>身份证号</th>
+                                    <th>拥有房产</th>
+                                    <th>微信绑定</th>
+                                    <th>认证状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for owner in owners %}
+                                <tr data-owner-id="{{ owner.id }}">
+                                    <td>
+                                        <input type="checkbox" class="owner-checkbox" value="{{ owner.id }}">
+                                    </td>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary-500); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">{{ owner.name|first|upper }}</div>
+                                            <span style="font-weight: 500;">{{ owner.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ owner.phone|truncatechars:11 }}</td>
+                                    <td>{{ owner.id_card|default:"-" }}</td>
+                                    <td>
+                                        {% with owner_properties=owner.owners.all %}
+                                            {% if owner_properties %}
+                                                <div style="max-width: 200px;">
+                                                    {% for owner_prop in owner_properties|slice:":3" %}
+                                                        <div style="font-size: 13px; color: var(--gray-700); margin-bottom: 2px;">
+                                                            {{ owner_prop.property }}
+                                                        </div>
+                                                    {% endfor %}
+                                                    {% if owner_properties|length > 3 %}
+                                                        <div style="font-size: 12px; color: var(--gray-400);">
+                                                            共{{ owner_properties|length }}套房产
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            {% else %}
+                                                <span style="color: var(--gray-400);">-</span>
+                                            {% endif %}
+                                        {% endwith %}
+                                    </td>
+                                    <td>
+                                        {% if owner.wechat_openid %}
+                                            <span class="tag tag-green">已绑定</span>
+                                        {% else %}
+                                            <span class="tag tag-gray">未绑定</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if owner.is_verified %}
+                                            <span class="badge badge-success">已认证</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">待审核</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="action-btn edit" onclick="OwnerCRUD.editOwner('{{ owner.id }}')">
+                                                <i class="ri-edit-line"></i>
+                                                编辑
+                                            </button>
+                                            <button class="action-btn delete" onclick="OwnerCRUD.deleteOwner('{{ owner.id }}', '{{ owner.name }}')">
+                                                <i class="ri-delete-bin-line"></i>
+                                                删除
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 40px; color: var(--gray-500);">
+                                        <i class="ri-inbox-line" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+                                        暂无业主数据，点击上方"新增业主"按钮添加
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <div class="table-pagination">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);">
+                                <!-- 左侧：每页显示数量选择器 -->
+                                <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                                    <span style="font-size: 13px; color: var(--gray-600);">每页显示：</span>
+                                    <select class="pagination-size-select" onchange="OwnerManager.changePageSize(this.value)">
+                                        <option value="10" {% if page_size == 10 %}selected{% endif %}>10 条</option>
+                                        <option value="20" {% if page_size == 20 %}selected{% endif %}>20 条</option>
+                                        <option value="50" {% if page_size == 50 %}selected{% endif %}>50 条</option>
+                                        <option value="100" {% if page_size == 100 %}selected{% endif %}>100 条</option>
+                                    </select>
+                                </div>
+
+                                <!-- 中间：分页信息 -->
+                                <div style="flex: 1; text-align: center;">
+                                    <span style="font-size: 13px; color: var(--gray-600);">
+                                        显示第 <strong>{{ owners.start_index }}-{{ owners.end_index }}</strong> 条，共 <strong>{{ owner_total }}</strong> 条记录
+                                    </span>
+                                </div>
+
+                                <!-- 右侧：分页按钮 -->
+                                <div class="pagination-controls">
+                                    {% if owners.has_previous %}
+                                    <a href="?page=1&page_size={{ page_size }}&search={{ request.GET.search }}&tab=owners" class="page-btn" title="首页">
+                                        首页
+                                    </a>
+                                    <a href="?page={{ owners.previous_page_number }}&page_size={{ page_size }}&search={{ request.GET.search }}&tab=owners" class="page-btn" title="上一页">
+                                        上一页
+                                    </a>
+                                    {% else %}
+                                    <button class="page-btn" disabled title="首页">
+                                        首页
+                                    </button>
+                                    <button class="page-btn" disabled title="上一页">
+                                        上一页
+                                    </button>
+                                    {% endif %}
+
+                                    <span class="page-indicator">
+                                        <strong>{{ owners.number }}</strong> / {{ owners.paginator.num_pages }}
+                                    </span>
+
+                                    {% if owners.has_next %}
+                                    <a href="?page={{ owners.next_page_number }}&page_size={{ page_size }}&search={{ request.GET.search }}&tab=owners" class="page-btn" title="下一页">
+                                        下一页
+                                    </a>
+                                    <a href="?page={{ owners.paginator.num_pages }}&page_size={{ page_size }}&search={{ request.GET.search }}&tab=owners" class="page-btn" title="末页">
+                                        末页
+                                    </a>
+                                    {% else %}
+                                    <button class="page-btn" disabled title="下一页">
+                                        下一页
+                                    </button>
+                                    <button class="page-btn" disabled title="末页">
+                                        末页
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 租户管理Tab -->
+                <div id="tab-tenants" class="tab-content" style="display: none;">
+                    <div class="table-container">
+                        <div class="table-toolbar">
+                            <div class="table-filters">
+                                <div class="search-input">
+                                    <i class="ri-search-line"></i>
+                                    <input type="text" id="tenant-search-input" placeholder="搜索租户姓名、手机号、房产..." value="{{ search_query }}">
+                                </div>
+                                <select class="filter-select" id="tenant-filter-community">
+                                    <option value="">所有小区</option>
+                                    {% for community in communities %}
+                                    <option value="{{ community.id }}" {% if request.GET.tenant_community == community.id|stringformat:'s' %}selected{% endif %}>{{ community.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <select class="filter-select" id="tenant-filter-status">
+                                    <option value="">租赁状态</option>
+                                    <option value="active" {% if request.GET.tenant_status == 'active' %}selected{% endif %}>租赁中</option>
+                                    <option value="expired" {% if request.GET.tenant_status == 'expired' %}selected{% endif %}>已到期</option>
+                                </select>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button class="btn btn-secondary" onclick="TenantManager.applyFilters()">
+                                    <i class="ri-filter-3-line"></i>
+                                    筛选
+                                </button>
+                                <button class="btn btn-primary" onclick="TenantCRUD.addTenant()">
+                                    <i class="ri-add-line"></i>
+                                    新增租户
+                                </button>
+                            </div>
+                        </div>
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>租户姓名</th>
+                                    <th>联系电话</th>
+                                    <th>租赁小区</th>
+                                    <th>租赁房产</th>
+                                    <th>租赁期限</th>
+                                    <th>月租金</th>
+                                    <th>状态</th>
+                                    <th>操作</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tenant in tenants %}
+                                <tr>
+                                    <td>
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent-500); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">{{ tenant.name|first|upper }}</div>
+                                            <span style="font-weight: 500;">{{ tenant.name }}</span>
+                                        </div>
+                                    </td>
+                                    <td>{{ tenant.phone|truncatechars:11 }}</td>
+                                    <td>
+                                        {% if tenant.property and tenant.property.community %}
+                                            {{ tenant.property.community.name }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if tenant.property %}
+                                            {{ tenant.property }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div style="font-size: 12px; color: var(--gray-600);">
+                                            {% if tenant.lease_start and tenant.lease_end %}
+                                                {{ tenant.lease_start|date:"Y.m.d" }} - {{ tenant.lease_end|date:"Y.m.d" }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td style="font-weight: 600; color: var(--gray-900);">
+                                        {% if tenant.rent_amount %}¥{{ tenant.rent_amount }}{% else %}-{% endif %}
+                                    </td>
+                                    <td>
+                                        {% if tenant.lease_end %}
+                                            {% now "Y-m-d" as today %}
+                                            {% if tenant.lease_end < today %}
+                                                <span class="badge badge-warning">已到期</span>
+                                            {% else %}
+                                                <span class="badge badge-success">租赁中</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge badge-gray">未知</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="table-actions">
+                                            <button class="action-btn edit" onclick="TenantCRUD.editTenant('{{ tenant.id }}')">
+                                                <i class="ri-edit-line"></i>
+                                                编辑
+                                            </button>
+                                            <button class="action-btn delete" onclick="TenantCRUD.deleteTenant('{{ tenant.id }}', '{{ tenant.name }}')">
+                                                <i class="ri-delete-bin-line"></i>
+                                                删除
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 40px; color: var(--gray-500);">
+                                        <i class="ri-inbox-line" style="font-size: 48px; display: block; margin-bottom: 10px;"></i>
+                                        暂无租户数据，点击上方"新增租户"按钮添加
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <div class="table-pagination">
+                            <div style="display: flex; align-items: center; justify-content: space-between; gap: var(--space-md);">
+                                <!-- 左侧：每页显示数量选择器 -->
+                                <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                                    <span style="font-size: 13px; color: var(--gray-600);">每页显示：</span>
+                                    <select class="pagination-size-select" onchange="TenantManager.changePageSize(this.value)">
+                                        <option value="10" {% if page_size == 10 %}selected{% endif %}>10 条</option>
+                                        <option value="20" {% if page_size == 20 %}selected{% endif %}>20 条</option>
+                                        <option value="50" {% if page_size == 50 %}selected{% endif %}>50 条</option>
+                                        <option value="100" {% if page_size == 100 %}selected{% endif %}>100 条</option>
+                                    </select>
+                                </div>
+
+                                <!-- 中间：分页信息 -->
+                                <div style="flex: 1; text-align: center;">
+                                    <span style="font-size: 13px; color: var(--gray-600);">
+                                        显示第 <strong>{{ tenants.start_index }}-{{ tenants.end_index }}</strong> 条，共 <strong>{{ tenant_total }}</strong> 条记录
+                                    </span>
+                                </div>
+
+                                <!-- 右侧：分页按钮 -->
+                                <div class="pagination-controls">
+                                    {% if tenants.has_previous %}
+                                    <a href="?page=1&page_size={{ page_size }}&search={{ request.GET.search }}&tab=tenants" class="page-btn" title="首页">
+                                        首页
+                                    </a>
+                                    <a href="?page={{ tenants.previous_page_number }}&page_size={{ page_size }}&search={{ request.GET.search }}&tab=tenants" class="page-btn" title="上一页">
+                                        上一页
+                                    </a>
+                                    {% else %}
+                                    <button class="page-btn" disabled title="首页">
+                                        首页
+                                    </button>
+                                    <button class="page-btn" disabled title="上一页">
+                                        上一页
+                                    </button>
+                                    {% endif %}
+
+                                    <span class="page-indicator">
+                                        <strong>{{ tenants.number }}</strong> / {{ tenants.paginator.num_pages }}
+                                    </span>
+
+                                    {% if tenants.has_next %}
+                                    <a href="?page={{ tenants.next_page_number }}&page_size={{ page_size }}&search={{ request.GET.search }}&tab=tenants" class="page-btn" title="下一页">
+                                        下一页
+                                    </a>
+                                    <a href="?page={{ tenants.paginator.num_pages }}&page_size={{ page_size }}&search={{ request.GET.search }}&tab=tenants" class="page-btn" title="末页">
+                                        末页
+                                    </a>
+                                    {% else %}
+                                    <button class="page-btn" disabled title="下一页">
+                                        下一页
+                                    </button>
+                                    <button class="page-btn" disabled title="末页">
+                                        末页
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            
+            </div>
+        </main>
+    </div>
+
+    <!-- 标签页工具函数 -->
+    <script src="/static/js/tab-utils.js?v=1.2"></script>
+    <!-- 通用CRUD管理器 -->
+    <script src="/static/js/universal-crud.js?v=2.5"></script>
+    <!-- 房产管理CRUD模块 -->
+    <script src="/static/js/property-crud.js?v=2.3"></script>
+    <script src="/static/js/admin.js?v=2.1"></script>
+
+    <script>
+    // 设置当前页面的active状态
+    document.addEventListener('DOMContentLoaded', function() {
+        const currentPath = window.location.pathname;
+
+        // 移除所有active类
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.remove('active');
+        });
+
+        // 添加active类到当前页面的导航项
+        if (currentPath === '/admin/') {
+            document.getElementById('nav-dashboard')?.classList.add('active');
+        } else if (currentPath === '/admin/community/') {
+            document.getElementById('nav-community')?.classList.add('active');
+        } else if (currentPath === '/admin/property/') {
+            document.getElementById('nav-property')?.classList.add('active');
+
+            // 检查URL参数中的tab，自动切换到对应的标签页
+            const urlParams = new URLSearchParams(window.location.search);
+            const activeTab = urlParams.get('tab');
+            const action = urlParams.get('action');
+
+            if (activeTab) {
+                const tabElement = document.querySelector(`.tab[onclick*="switchTab(this, '${activeTab}')"]`);
+                if (tabElement) {
+                    switchTab(tabElement, activeTab);
+                }
+            }
+
+            // 处理action参数
+            console.log('[Property Page] Checking action parameter:', action);
+            console.log('[Property Page] typeof OwnerCRUD:', typeof OwnerCRUD);
+            console.log('[Property Page] typeof OwnerCRUD.addOwner:', typeof OwnerCRUD !== 'undefined' ? typeof OwnerCRUD.addOwner : 'N/A');
+
+            if (action === 'add') {
+                console.log('[Property Page] Action is "add", attempting to open add form...');
+
+                // 先切换到业主标签页
+                if (activeTab === 'owners') {
+                    console.log('[Property Page] Switching to owners tab first');
+                    const tabElement = document.querySelector(`.tab[onclick*="switchTab(this, 'owners')"]`);
+                    if (tabElement) {
+                        switchTab(tabElement, 'owners');
+                    }
+                }
+
+                // 延迟执行以确保标签页已切换完成
+                setTimeout(() => {
+                    console.log('[Property Page] Timeout fired, checking OwnerCRUD again...');
+                    console.log('[Property Page] typeof OwnerCRUD:', typeof OwnerCRUD);
+
+                    if (typeof OwnerCRUD !== 'undefined' && typeof OwnerCRUD.addOwner === 'function') {
+                        console.log('[Property Page] ✓ Calling OwnerCRUD.addOwner()');
+                        try {
+                            OwnerCRUD.addOwner();
+                            console.log('[Property Page] ✓ addOwner() called successfully');
+                        } catch (e) {
+                            console.error('[Property Page] ✗ Error calling addOwner:', e);
+                        }
+                    } else {
+                        console.error('[Property Page] ✗ OwnerCRUD or addOwner not available');
+                    }
+                }, 500);
+            }
+
+            // 初始化所有搜索功能
+            if (typeof PropertyManager !== 'undefined' && PropertyManager.setupSearch) {
+                PropertyManager.setupSearch();
+            }
+            if (typeof OwnerManager !== 'undefined' && OwnerManager.setupSearch) {
+                OwnerManager.setupSearch();
+            }
+            if (typeof TenantManager !== 'undefined' && TenantManager.setupSearch) {
+                TenantManager.setupSearch();
+            }
+        } else if (currentPath === '/admin/payment/') {
+            document.getElementById('nav-payment')?.classList.add('active');
+        } else if (currentPath === '/admin/maintenance/') {
+            document.getElementById('nav-maintenance')?.classList.add('active');
+        }
+    });
+
+    // Tab切换功能
+    function switchTab(tabElement, tabName) {
+        const container = tabElement.closest('.tabs');
+        const tabs = container.querySelectorAll('.tab');
+
+        tabs.forEach(tab => tab.classList.remove('active'));
+        tabElement.classList.add('active');
+
+        const mainContent = document.querySelector('.content');
+        const tabContents = mainContent.querySelectorAll('.tab-content');
+        tabContents.forEach(content => {
+            content.style.display = 'none';
+        });
+
+        const selectedTab = document.getElementById('tab-' + tabName);
+        if (selectedTab) {
+            selectedTab.style.display = 'block';
+        }
+    }
+
+    // 房产管理器
+    const PropertyManager = {
+        importExcel() {
+            // 创建导入对话框
+            const dialogHtml = `
+                <div id="import-property-dialog" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 9999;">
+                    <div style="background: white; border-radius: 12px; padding: 32px; width: 500px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+                            <h2 style="font-size: 20px; font-weight: 600; margin: 0;">导入房产信息Excel</h2>
+                            <button onclick="document.getElementById('import-property-dialog').remove()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #64748B;">&times;</button>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: #334155;">选择小区 *</label>
+                            <select id="import-property-community" class="form-control" style="width: 100%; padding: 10px; border: 1px solid #CBD5E1; border-radius: 6px; font-size: 14px;">
+                                <option value="">请选择小区</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; font-size: 13px; font-weight: 500; margin-bottom: 8px; color: #334155;">上传Excel文件 *</label>
+                            <div style="border: 2px dashed #CBD5E1; border-radius: 8px; padding: 24px; text-align: center; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('import-property-file').click()" onmouseover="this.style.borderColor='#3B82F6'; this.style.background='#F8FAFC'" onmouseout="this.style.borderColor='#CBD5E1'; this.style.background='white'">
+                                <input type="file" id="import-property-file" accept=".xlsx,.xls" style="display: none;" onchange="PropertyManager.handleImportFileSelect(this)">
+                                <div id="property-file-preview" style="display: none;">
+                                    <i class="ri-file-excel-2-line" style="font-size: 32px; color: #10B981;"></i>
+                                    <p id="property-file-name" style="margin: 8px 0 0 0; font-size: 14px; color: #334155;"></p>
+                                </div>
+                                <div id="property-upload-hint">
+                                    <i class="ri-upload-cloud-2-line" style="font-size: 32px; color: #64748B;"></i>
+                                    <p style="margin: 8px 0 0 0; font-size: 14px; color: #64748B;">点击或拖拽文件到此处上传</p>
+                                    <p style="margin: 4px 0 0 0; font-size: 12px; color: #94A3B8;">支持 .xlsx 或 .xls 格式</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="background: #FEF3C7; border-left: 4px solid #F59E0B; padding: 12px; margin-bottom: 20px; border-radius: 4px;">
+                            <p style="margin: 0; font-size: 12px; color: #92400E;">
+                                <strong>Excel文件要求：</strong><br>
+                                • 必须包含列：房号、业主姓名、联系电话、面积<br>
+                                • 房号格式示例：1-301、2-601、1号楼1单元-201<br>
+                                • 系统将自动关联业主到所选小区的房产
+                            </p>
+                        </div>
+
+                        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                            <button onclick="document.getElementById('import-property-dialog').remove()" style="padding: 10px 20px; border: 1px solid #CBD5E1; background: white; border-radius: 6px; font-size: 14px; cursor: pointer; color: #64748B;">取消</button>
+                            <button onclick="PropertyManager.submitPropertyImport()" style="padding: 10px 20px; border: none; background: #0F4C81; color: white; border-radius: 6px; font-size: 14px; cursor: pointer;">开始导入</button>
+                        </div>
+
+                        <div id="import-property-result" style="display: none; margin-top: 20px;"></div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', dialogHtml);
+
+            // 加载小区列表
+            fetch('/api/community/communities/')
+                .then(response => response.json())
+                .then(data => {
+                    const select = document.getElementById('import-property-community');
+                    // DRF返回分页数据，results字段包含小区列表
+                    const communities = data.results || data;
+
+                    if (Array.isArray(communities)) {
+                        communities.forEach(community => {
+                            const option = document.createElement('option');
+                            option.value = community.id;
+                            option.textContent = community.name;
+                            select.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => {
+                    console.error('加载小区列表失败:', error);
+                });
+        },
+
+        // 处理导入文件选择
+        handleImportFileSelect: function(input) {
+            const file = input.files[0];
+            if (file) {
+                document.getElementById('property-file-preview').style.display = 'block';
+                document.getElementById('property-upload-hint').style.display = 'none';
+                document.getElementById('property-file-name').textContent = file.name;
+            }
+        },
+
+        // 提交房产导入
+        submitPropertyImport: function() {
+            const communityId = document.getElementById('import-property-community').value;
+            const fileInput = document.getElementById('import-property-file');
+
+            if (!communityId) {
+                alert('请选择小区');
+                return;
+            }
+
+            if (!fileInput.files.length) {
+                alert('请选择Excel文件');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('community_id', communityId);
+
+            // 显示加载状态
+            const resultDiv = document.getElementById('import-property-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p style="text-align: center; color: #64748B;"><i class="ri-loader-4-line ri-spin"></i> 正在导入...</p>';
+
+            // 获取CSRF token
+            const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]')?.content ||
+                              document.querySelector('meta[name="csrf-token"]')?.content ||
+                              document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+            fetch('/api/property/properties/import_excel/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success || data.message) {
+                    resultDiv.innerHTML = `
+                        <div style="background: #D1FAE5; border-left: 4px solid #10B981; padding: 12px; border-radius: 4px;">
+                            <p style="margin: 0; font-size: 13px; color: #065F46;">
+                                <strong>导入成功！</strong><br>
+                                新增房产：${data.stats.created_properties} 个<br>
+                                更新房产：${data.stats.updated_properties} 个<br>
+                                新增业主：${data.stats.created_owners} 个
+                            </p>
+                        </div>
+                    `;
+
+                    // 延迟刷新页面
+                    setTimeout(() => {
+                        document.getElementById('import-property-dialog').remove();
+                        window.location.reload();
+                    }, 1500);
+                } else {
+                    resultDiv.innerHTML = `
+                        <div style="background: #FEE2E2; border-left: 4px solid #EF4444; padding: 12px; border-radius: 4px;">
+                            <p style="margin: 0; font-size: 13px; color: #991B1B;">
+                                <strong>导入失败：</strong>${data.error || '未知错误'}
+                            </p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('导入错误:', error);
+                resultDiv.innerHTML = `
+                    <div style="background: #FEE2E2; border-left: 4px solid #EF4444; padding: 12px; border-radius: 4px;">
+                        <p style="margin: 0; font-size: 13px; color: #991B1B;">
+                            <strong>导入失败：</strong>网络错误或服务器异常
+                        </p>
+                    </div>
+                `;
+            });
+        },
+
+        changePageSize(pageSize) {
+            // 改变每页显示数量，重置到第一页，保留所有筛选条件
+            const searchInput = document.getElementById('property-search-input');
+            const searchValue = searchInput ? searchInput.value.trim() : '';
+            const community = document.getElementById('filter-community')?.value || '';
+            const propertyType = document.getElementById('filter-type')?.value || '';
+            const status = document.getElementById('filter-status')?.value || '';
+
+            const url = new URL(window.location);
+            url.searchParams.set('page', '1');
+            url.searchParams.set('page_size', pageSize);
+
+            // 保留搜索条件
+            if (searchValue) {
+                url.searchParams.set('search', searchValue);
+            } else {
+                url.searchParams.delete('search');
+            }
+
+            // 保留筛选条件
+            if (community) {
+                url.searchParams.set('community', community);
+            } else {
+                url.searchParams.delete('community');
+            }
+            if (propertyType) {
+                url.searchParams.set('property_type', propertyType);
+            } else {
+                url.searchParams.delete('property_type');
+            }
+            if (status) {
+                url.searchParams.set('status', status);
+            } else {
+                url.searchParams.delete('status');
+            }
+
+            window.location.href = url.toString();
+        },
+
+        // 实时搜索功能
+        setupSearch() {
+            const searchInput = document.getElementById('property-search-input');
+            if (!searchInput) return;
+
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const searchValue = e.target.value.trim();
+
+                // 延迟1000ms后执行搜索，避免频繁请求
+                searchTimeout = setTimeout(() => {
+                    const url = new URL(window.location);
+                    url.searchParams.set('page', '1'); // 搜索时重置到第一页
+                    url.searchParams.set('tab', 'properties'); // 保持房产列表标签页
+
+                    // 获取当前筛选条件
+                    const community = document.getElementById('filter-community')?.value || '';
+                    const propertyType = document.getElementById('filter-type')?.value || '';
+                    const status = document.getElementById('filter-status')?.value || '';
+
+                    // 保留搜索条件
+                    if (searchValue) {
+                        url.searchParams.set('search', searchValue);
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+
+                    // 保留筛选条件
+                    if (community) {
+                        url.searchParams.set('community', community);
+                    } else {
+                        url.searchParams.delete('community');
+                    }
+                    if (propertyType) {
+                        url.searchParams.set('property_type', propertyType);
+                    } else {
+                        url.searchParams.delete('property_type');
+                    }
+                    if (status) {
+                        url.searchParams.set('status', status);
+                    } else {
+                        url.searchParams.delete('status');
+                    }
+
+                    window.location.href = url.toString();
+                }, 1000);
+            });
+        },
+
+        // 应用筛选条件
+        applyFilters() {
+            const community = document.getElementById('filter-community').value;
+            const propertyType = document.getElementById('filter-type').value;
+            const status = document.getElementById('filter-status').value;
+            const searchInput = document.getElementById('property-search-input');
+            const searchValue = searchInput ? searchInput.value.trim() : '';
+
+            const url = new URL(window.location);
+            url.searchParams.set('page', '1');
+            url.searchParams.set('tab', 'properties'); // 保持房产列表标签页
+
+            // 设置筛选参数
+            if (community) url.searchParams.set('community', community);
+            else url.searchParams.delete('community');
+
+            if (propertyType) url.searchParams.set('property_type', propertyType);
+            else url.searchParams.delete('property_type');
+
+            if (status) url.searchParams.set('status', status);
+            else url.searchParams.delete('status');
+
+            if (searchValue) url.searchParams.set('search', searchValue);
+            else url.searchParams.delete('search');
+
+            window.location.href = url.toString();
+        },
+
+        // 导出为Excel
+        async exportToExcel() {
+            try {
+                // 获取当前筛选条件
+                const community = document.getElementById('filter-community').value;
+                const propertyType = document.getElementById('filter-type').value;
+                const status = document.getElementById('filter-status').value;
+                const searchInput = document.getElementById('property-search-input');
+                const searchValue = searchInput ? searchInput.value.trim() : '';
+
+                // 构建导出URL
+                const url = new URL('/api/property/properties/export_excel/', window.location.origin);
+                if (community) url.searchParams.set('community', community);
+                if (propertyType) url.searchParams.set('property_type', propertyType);
+                if (status) url.searchParams.set('status', status);
+                if (searchValue) url.searchParams.set('search', searchValue);
+
+                // 显示加载状态
+                const exportBtn = event.target.closest('button');
+                const originalText = exportBtn.innerHTML;
+                exportBtn.innerHTML = '<i class="ri-loader-4-line ri-spin"></i> 导出中...';
+                exportBtn.disabled = true;
+
+                // 发送导出请求
+                const response = await fetch(url.toString(), {
+                    method: 'GET',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name="csrfmiddlewaretoken"]')?.content ||
+                                     document.querySelector('meta[name="csrf-token"]')?.content
+                    }
+                });
+
+                if (response.ok) {
+                    // 下载文件
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = `房产列表_${new Date().toISOString().slice(0,10)}.xlsx`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    window.URL.revokeObjectURL(downloadUrl);
+
+                    alert('✅ 导出成功！');
+                } else {
+                    const error = await response.json();
+                    alert('❌ 导出失败：' + (error.error || '未知错误'));
+                }
+
+                // 恢复按钮状态
+                exportBtn.innerHTML = originalText;
+                exportBtn.disabled = false;
+            } catch (error) {
+                console.error('导出错误:', error);
+                alert('❌ 导出失败：网络错误或服务器异常');
+
+                // 恢复按钮状态
+                const exportBtn = event.target.closest('button');
+                exportBtn.innerHTML = '<i class="ri-download-line"></i> 导出';
+                exportBtn.disabled = false;
+            }
+        },
+
+        // 全选/取消全选当前页面
+        toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('.property-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+        },
+
+        // 批量删除房产
+        async batchDeleteProperties() {
+            const checkboxes = document.querySelectorAll('.property-checkbox:checked');
+
+            if (checkboxes.length === 0) {
+                alert('请先选择要删除的房产');
+                return;
+            }
+
+            const propertyIds = Array.from(checkboxes).map(cb => cb.value);
+
+            const confirmed = confirm(`确定要删除选中的 ${propertyIds.length} 个房产吗？\n\n此操作无法恢复！`);
+            if (!confirmed) return;
+
+            try {
+                // 获取CSRF token
+                const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]')?.content ||
+                                  document.querySelector('meta[name="csrf-token"]')?.content ||
+                                  document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+                // 发送删除请求
+                const response = await fetch('/api/property/properties/batch_delete/', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        property_ids: propertyIds
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    // 刷新页面以显示更新后的数据
+                    window.location.reload();
+                } else {
+                    alert('删除失败：' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('批量删除错误:', error);
+                alert('删除失败：网络错误或服务器异常');
+            }
+        }
+    };
+
+    // 业主管理器
+    const OwnerManager = {
+        changePageSize(pageSize) {
+            const searchInput = document.getElementById('owner-search-input');
+            const searchValue = searchInput ? searchInput.value.trim() : '';
+            const community = document.getElementById('owner-filter-community')?.value || '';
+            const verified = document.getElementById('owner-filter-verified')?.value || '';
+
+            const url = new URL(window.location);
+            url.searchParams.set('page', '1');
+            url.searchParams.set('page_size', pageSize);
+            url.searchParams.set('tab', 'owners'); // 保持业主管理标签页
+
+            if (searchValue) url.searchParams.set('search', searchValue);
+            else url.searchParams.delete('search');
+
+            if (community) url.searchParams.set('owner_community', community);
+            else url.searchParams.delete('owner_community');
+
+            if (verified) url.searchParams.set('owner_verified', verified);
+            else url.searchParams.delete('owner_verified');
+
+            window.location.href = url.toString();
+        },
+
+        // 实时搜索功能
+        setupSearch() {
+            const searchInput = document.getElementById('owner-search-input');
+            if (!searchInput) return;
+
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const searchValue = e.target.value.trim();
+
+                // 延迟1000ms后执行搜索，避免频繁请求
+                searchTimeout = setTimeout(() => {
+                    const url = new URL(window.location);
+                    url.searchParams.set('page', '1'); // 搜索时重置到第一页
+                    url.searchParams.set('tab', 'owners'); // 保持业主管理标签页
+
+                    // 获取当前筛选条件
+                    const community = document.getElementById('owner-filter-community')?.value || '';
+                    const verified = document.getElementById('owner-filter-verified')?.value || '';
+
+                    // 保留搜索条件
+                    if (searchValue) {
+                        url.searchParams.set('search', searchValue);
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+
+                    // 保留筛选条件
+                    if (community) {
+                        url.searchParams.set('owner_community', community);
+                    } else {
+                        url.searchParams.delete('owner_community');
+                    }
+                    if (verified) {
+                        url.searchParams.set('owner_verified', verified);
+                    } else {
+                        url.searchParams.delete('owner_verified');
+                    }
+
+                    window.location.href = url.toString();
+                }, 1000);
+            });
+        },
+
+        // 应用筛选条件
+        applyFilters() {
+            const community = document.getElementById('owner-filter-community').value;
+            const verified = document.getElementById('owner-filter-verified').value;
+            const searchInput = document.getElementById('owner-search-input');
+            const searchValue = searchInput ? searchInput.value.trim() : '';
+
+            const url = new URL(window.location);
+            url.searchParams.set('page', '1');
+            url.searchParams.set('tab', 'owners');
+
+            // 设置筛选参数
+            if (community) url.searchParams.set('owner_community', community);
+            else url.searchParams.delete('owner_community');
+
+            if (verified) url.searchParams.set('owner_verified', verified);
+            else url.searchParams.delete('owner_verified');
+
+            if (searchValue) url.searchParams.set('search', searchValue);
+            else url.searchParams.delete('search');
+
+            window.location.href = url.toString();
+        },
+
+        // 全选/取消全选当前页面
+        toggleSelectAll(checkbox) {
+            const checkboxes = document.querySelectorAll('.owner-checkbox');
+            checkboxes.forEach(cb => {
+                cb.checked = checkbox.checked;
+            });
+        },
+
+        // 批量删除业主
+        async batchDeleteOwners() {
+            const checkboxes = document.querySelectorAll('.owner-checkbox:checked');
+
+            if (checkboxes.length === 0) {
+                alert('请先选择要删除的业主');
+                return;
+            }
+
+            const ownerIds = Array.from(checkboxes).map(cb => cb.value);
+
+            const confirmed = confirm(`确定要删除选中的 ${ownerIds.length} 位业主吗？\n\n此操作无法恢复！`);
+            if (!confirmed) return;
+
+            try {
+                // 获取CSRF token
+                const csrfToken = document.querySelector('[name="csrfmiddlewaretoken"]')?.content ||
+                                  document.querySelector('meta[name="csrf-token"]')?.content ||
+                                  document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+
+                // 发送删除请求
+                const response = await fetch('/api/property/owners/batch_delete/', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({
+                        owner_ids: ownerIds
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert(result.message);
+                    // 刷新页面以显示更新后的数据
+                    window.location.reload();
+                } else {
+                    alert('删除失败：' + (result.error || '未知错误'));
+                }
+            } catch (error) {
+                console.error('批量删除错误:', error);
+                alert('删除失败：网络错误或服务器异常');
+            }
+        }
+    };
+
+    // 租户管理器
+    const TenantManager = {
+        changePageSize(pageSize) {
+            const searchInput = document.getElementById('tenant-search-input');
+            const searchValue = searchInput ? searchInput.value.trim() : '';
+            const community = document.getElementById('tenant-filter-community')?.value || '';
+            const status = document.getElementById('tenant-filter-status')?.value || '';
+
+            const url = new URL(window.location);
+            url.searchParams.set('page', '1');
+            url.searchParams.set('page_size', pageSize);
+            url.searchParams.set('tab', 'tenants'); // 保持租户管理标签页
+
+            if (searchValue) url.searchParams.set('search', searchValue);
+            else url.searchParams.delete('search');
+
+            if (community) url.searchParams.set('tenant_community', community);
+            else url.searchParams.delete('tenant_community');
+
+            if (status) url.searchParams.set('tenant_status', status);
+            else url.searchParams.delete('tenant_status');
+
+            window.location.href = url.toString();
+        },
+
+        // 实时搜索功能
+        setupSearch() {
+            const searchInput = document.getElementById('tenant-search-input');
+            if (!searchInput) return;
+
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                const searchValue = e.target.value.trim();
+
+                // 延迟1000ms后执行搜索，避免频繁请求
+                searchTimeout = setTimeout(() => {
+                    const url = new URL(window.location);
+                    url.searchParams.set('page', '1'); // 搜索时重置到第一页
+                    url.searchParams.set('tab', 'tenants'); // 保持租户管理标签页
+
+                    // 获取当前筛选条件
+                    const community = document.getElementById('tenant-filter-community')?.value || '';
+                    const status = document.getElementById('tenant-filter-status')?.value || '';
+
+                    // 保留搜索条件
+                    if (searchValue) {
+                        url.searchParams.set('search', searchValue);
+                    } else {
+                        url.searchParams.delete('search');
+                    }
+
+                    // 保留筛选条件
+                    if (community) {
+                        url.searchParams.set('tenant_community', community);
+                    } else {
+                        url.searchParams.delete('tenant_community');
+                    }
+
+                    if (status) {
+                        url.searchParams.set('tenant_status', status);
+                    } else {
+                        url.searchParams.delete('tenant_status');
+                    }
+
+                    window.location.href = url.toString();
+                }, 1000);
+            });
+        },
+
+        // 应用筛选条件
+        applyFilters() {
+            const community = document.getElementById('tenant-filter-community').value;
+            const status = document.getElementById('tenant-filter-status').value;
+            const searchInput = document.getElementById('tenant-search-input');
+            const searchValue = searchInput ? searchInput.value.trim() : '';
+
+            const url = new URL(window.location);
+            url.searchParams.set('page', '1');
+            url.searchParams.set('tab', 'tenants');
+
+            // 设置筛选参数
+            if (community) url.searchParams.set('tenant_community', community);
+            else url.searchParams.delete('tenant_community');
+
+            if (status) url.searchParams.set('tenant_status', status);
+            else url.searchParams.delete('tenant_status');
+
+            if (searchValue) url.searchParams.set('search', searchValue);
+            else url.searchParams.delete('search');
+
+            window.location.href = url.toString();
+        },
+    };
+</script>
+</body>
+</html>

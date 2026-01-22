@@ -1,0 +1,103 @@
+{% load static %}
+<aside class="sidebar" role="navigation" aria-label="主导航">
+    <div class="sidebar-header">
+        <a href="{% url 'dashboard' %}" class="logo" aria-label="智慧物业首页">
+            <div class="logo-icon" aria-hidden="true">
+                <i class="ri-building-4-line"></i>
+            </div>
+            <span>智慧物业</span>
+        </a>
+    </div>
+
+    <nav class="sidebar-nav" aria-label="主菜单">
+        <!-- 主导航 -->
+        <div class="nav-section">
+            <h2 class="nav-section-title">主菜单</h2>
+            <a href="{% url 'dashboard' %}"
+               class="nav-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>
+                <i class="ri-dashboard-line" aria-hidden="true"></i>
+                <span>数据概览</span>
+            </a>
+            <a href="{% url 'community' %}"
+               class="nav-item {% if request.resolver_match.url_name == 'community' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'community' %}aria-current="page"{% endif %}>
+                <i class="ri-community-line" aria-hidden="true"></i>
+                <span>小区管理</span>
+            </a>
+            <a href="{% url 'property' %}"
+               class="nav-item {% if request.resolver_match.url_name == 'property' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'property' %}aria-current="page"{% endif %}>
+                <i class="ri-home-4-line" aria-hidden="true"></i>
+                <span>房产管理</span>
+            </a>
+        </div>
+
+        <!-- 业务管理 -->
+        <div class="nav-section">
+            <h2 class="nav-section-title">业务管理</h2>
+            <a href="{% url 'payment' %}"
+               class="nav-item {% if request.resolver_match.url_name == 'payment' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'payment' %}aria-current="page"{% endif %}>
+                <i class="ri-payment-line" aria-hidden="true"></i>
+                <span>缴费管理</span>
+            </a>
+            <a href="{% url 'maintenance' %}"
+               class="nav-item {% if request.resolver_match.url_name == 'maintenance' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'maintenance' %}aria-current="page"{% endif %}>
+                <i class="ri-tools-line" aria-hidden="true"></i>
+                <span>报事管理</span>
+                {% if pending_maintenance_count > 0 %}
+                <span class="nav-badge" aria-label="{{ pending_maintenance_count }}条待处理报事">
+                    {{ pending_maintenance_count }}
+                </span>
+                {% endif %}
+            </a>
+        </div>
+
+        <!-- 系统管理 -->
+        <div class="nav-section">
+            <h2 class="nav-section-title">系统管理</h2>
+            <a href="{% url 'users' %}"
+               class="nav-item {% if request.resolver_match.url_name == 'users' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'users' %}aria-current="page"{% endif %}>
+                <i class="ri-user-settings-line" aria-hidden="true"></i>
+                <span>用户管理</span>
+            </a>
+            <a href="{% url 'payment_config' %}"
+               class="nav-item {% if request.resolver_match.url_name == 'payment_config' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'payment_config' %}aria-current="page"{% endif %}>
+                <i class="ri-wechat-pay-line" aria-hidden="true"></i>
+                <span>支付管理</span>
+            </a>
+            <a href="{% url 'account_management' %}"
+               class="nav-item {% if request.resolver_match.url_name == 'account_management' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'account_management' %}aria-current="page"{% endif %}>
+                <i class="ri-admin-line" aria-hidden="true"></i>
+                <span>账户管理</span>
+            </a>
+            <a href="{% url 'settings' %}"
+               class="nav-item {% if request.resolver_match.url_name == 'settings' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'settings' %}aria-current="page"{% endif %}>
+                <i class="ri-settings-3-line" aria-hidden="true"></i>
+                <span>系统设置</span>
+            </a>
+            <a href="{% url 'logs' %}"
+               class="nav-item {% if request.resolver_match.url_name == 'logs' %}active{% endif %}"
+               {% if request.resolver_match.url_name == 'logs' %}aria-current="page"{% endif %}>
+                <i class="ri-file-list-3-line" aria-hidden="true"></i>
+                <span>操作日志</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-card">
+            <div class="user-avatar" aria-hidden="true">{{ request.user.username|first|upper }}</div>
+            <div class="user-info">
+                <div class="user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
+                <div class="user-role">{{ request.user.get_role_display }}</div>
+            </div>
+        </div>
+    </div>
+</aside>
